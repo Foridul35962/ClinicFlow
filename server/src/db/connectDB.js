@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 
 const connectDB = async ()=>{
     try {
-        await mongoose.connect()
+        await mongoose.connect(`${process.env.MONGODB_URL}/clinicFlow`)
             .then(()=>{
                 console.log('database is connected successfully')
             })
