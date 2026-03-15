@@ -114,18 +114,6 @@ export const verifyRegi = AsyncHandler(async (req, res) => {
         throw new ApiErrors(429, 'too many request')
     }
 
-    const otpAttemptKey = `otpAttempt:${email}`
-
-    const attempts = await redis.incr(otpAttemptKey)
-
-    if (attempts === 1) {
-        await redis.expire(otpAttemptKey, 300)
-    }
-
-    if (attempts > 5) {
-        throw new ApiErrors(429, 'Too many OTP attempts')
-    }
-
     const redisKey = `userRegistration:${email}`
 
     const redisUserString = await redis.get(redisKey)
@@ -379,18 +367,6 @@ export const verifyResetPass = [
 
         if (count > 10) {
             throw new ApiErrors(429, 'too many request')
-        }
-
-        const otpAttemptKey = `otpAttempt:${email}`
-
-        const attempts = await redis.incr(otpAttemptKey)
-
-        if (attempts === 1) {
-            await redis.expire(otpAttemptKey, 300)
-        }
-
-        if (attempts > 5) {
-            throw new ApiErrors(429, 'Too many OTP attempts')
         }
 
         const resetRedisKey = `resetPass:${email}`
