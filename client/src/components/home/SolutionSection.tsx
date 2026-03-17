@@ -41,18 +41,11 @@ const SolutionSection = () => {
   ];
 
   return (
-    <section className="relative py-24 bg-linear-to-b from-white to-blue-50">
+    <section className="relative pt-24 pb-10 bg-linear-to-b from-white to-blue-50">
       <div className="container mx-auto px-6">
         
         {/* Section Header */}
         <div className="max-w-3xl mx-auto text-center mb-20">
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-green-50 border border-green-100 rounded-full text-green-700 text-xs font-bold uppercase tracking-widest mb-6">
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
-            </span>
-            The Solution
-          </div>
           <h2 className="text-4xl lg:text-5xl font-black text-slate-900 leading-tight">
             A Smarter Way To Manage <br /> Patient Queues
           </h2>
