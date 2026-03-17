@@ -42,14 +42,13 @@ const Features = () => {
   ];
 
   return (
-    <section className="py-24 bg-blue-50 relative overflow-hidden">
+    <section className="pt-24 pb-10 bg-blue-50 relative overflow-hidden">
       {/* Background decoration */}
       <div className="absolute top-0 right-0 w-1/3 h-1/3 bg-blue-100 rounded-full blur-[120px] -z-10 translate-x-1/2 -translate-y-1/2"></div>
       
       <div className="container mx-auto px-6">
         {/* Header */}
         <div className="max-w-3xl mb-20">
-          <h2 className="text-blue-600 font-bold tracking-widest uppercase text-xs mb-4">Powerful Capabilities</h2>
           <h3 className="text-4xl lg:text-5xl font-black text-slate-900 leading-tight">
             Comprehensive Features of <span className="text-blue-600">ClinicFlow</span>
           </h3>

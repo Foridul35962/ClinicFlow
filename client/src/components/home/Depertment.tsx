@@ -36,13 +36,12 @@ const Depertment = () => {
   ];
 
   return (
-    <section className="py-24 bg-linear-to-b from-blue-50 to-white">
+    <section className="pt-24 pb-10 bg-linear-to-b from-blue-50 to-white">
       <div className="container mx-auto px-6">
         
         {/* Section Header */}
         <div className="flex flex-col md:flex-row justify-between items-end mb-16 gap-6">
           <div className="max-w-xl">
-            <h2 className="text-blue-600 font-bold tracking-widest uppercase text-xs mb-3">Specialties</h2>
             <h3 className="text-4xl lg:text-5xl font-black text-slate-900 leading-tight">
               Our Medical <span className="text-blue-600">Departments</span>
             </h3>

@@ -30,11 +30,10 @@ const Work = () => {
   ];
 
   return (
-    <section className="py-24 bg-blue-50">
+    <section className="pt-24 pb-10 bg-blue-50">
       <div className="container mx-auto px-6 relative">
         {/* Section Header */}
         <div className="text-center mb-20">
-          <h2 className="text-blue-600 font-bold tracking-widest uppercase text-xs mb-3">Process Flow</h2>
           <h3 className="text-4xl lg:text-5xl font-black text-slate-900 leading-tight">
             How It Works
           </h3>

@@ -2,7 +2,7 @@ import React from 'react';
 
 const HeroSection = () => {
   return (
-    <section className="relative bg-linear-to-br from-slate-50 to-blue-100 py-16 lg:py-28 overflow-hidden">
+    <section className="relative bg-linear-to-br from-slate-50 to-blue-100 py-4 overflow-hidden">
       {/* Background Shapes for Depth */}
       <div className="absolute top-0 right-0 w-72 h-72 bg-blue-200/40 rounded-full blur-3xl -translate-y-1/2 translate-x-1/4"></div>
       <div className="absolute bottom-0 left-0 w-96 h-96 bg-indigo-200/30 rounded-full blur-3xl translate-y-1/2 -translate-x-1/4"></div>
@@ -12,10 +12,6 @@ const HeroSection = () => {
           
           {/* Left Side: Content */}
           <div className="lg:w-3/5 text-center lg:text-left space-y-8">
-            <div className="inline-block px-4 py-1.5 bg-blue-600/10 border border-blue-200 rounded-full text-blue-700 text-sm font-bold tracking-wide uppercase">
-              ⚡ Real-Time Hospital Management
-            </div>
-            
             <h1 className="text-5xl lg:text-7xl font-black text-slate-900 leading-[1.1]">
               Smart <span className="text-blue-600">Queue</span> <br />
               & Appointment

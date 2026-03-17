@@ -42,14 +42,11 @@ const ProblemSection = () => {
   ];
 
   return (
-    <section className="relative py-24 bg-linear-to-b from-blue-100 to-white">
+    <section className="relative pt-24 pb-10 bg-linear-to-b from-blue-100 to-white">
       <div className="container mx-auto px-6 relative">
         
         {/* Section Header */}
         <div className="max-w-2xl mx-auto text-center mb-20">
-          <h2 className="text-blue-600 font-bold tracking-[0.2em] uppercase text-xs mb-4">
-            Identifying the Pain Points
-          </h2>
           <h3 className="text-4xl lg:text-5xl font-black text-slate-900 leading-tight">
             The Problem With Traditional Hospital Queues
           </h3>
