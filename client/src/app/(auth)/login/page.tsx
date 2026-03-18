@@ -1,10 +1,10 @@
 "use client";
 
 import React from 'react';
-import { Stethoscope, Mail, Lock, ArrowRight } from 'lucide-react';
+import { Stethoscope, Mail, Lock, ArrowRight, Loader2 } from 'lucide-react';
 import Link from 'next/link';
-import { useDispatch } from 'react-redux';
-import { AppDispatch } from '@/store/store';
+import { useDispatch, useSelector } from 'react-redux';
+import { AppDispatch, RootState } from '@/store/store';
 import { login } from '@/store/slice/authSlice';
 import { useRouter } from 'next/navigation';
 import { toast } from 'react-toastify';
@@ -12,20 +12,22 @@ import { toast } from 'react-toastify';
 const LoginPage = () => {
     const dispatch = useDispatch<AppDispatch>()
     const router = useRouter()
-    const handleSubmit = async (e:React.FormEvent<HTMLFormElement>)=>{
+    const { authLoading } = useSelector((state: RootState) => state.auth)
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault()
         const formData = new FormData(e.currentTarget)
         const email = formData.get('email') as string
         const password = formData.get('password') as string
         try {
-            await dispatch(login({email, password})).unwrap()
+            await dispatch(login({ email, password })).unwrap()
             router.push('/')
             toast.success('Login Successfully')
-        } catch (error:any) {
+        } catch (error: any) {
+            console.log(error)
             toast.error(error.message)
         }
     }
-    
+
     return (
         <div className="min-h-screen bg-linear-to-br from-blue-50 to-indigo-50 flex items-center justify-center p-6">
             <div className="w-full max-w-275 bg-white rounded-[2.5rem] shadow-2xl shadow-blue-900/10 overflow-hidden flex flex-col md:flex-row">
@@ -110,10 +112,21 @@ const LoginPage = () => {
                         </div>
 
                         <button
-                        type='submit'
-                        className="w-full py-4 bg-blue-600 text-white font-black rounded-2xl shadow-xl shadow-blue-200 hover:bg-blue-700 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2">
-                            Sign In to Account
-                            <ArrowRight className="w-5 h-5" />
+                            type='submit'
+                            disabled={authLoading}
+                            className="w-full py-4 disabled:cursor-not-allowed cursor-pointer bg-blue-600 text-white font-black rounded-2xl shadow-xl shadow-blue-200 hover:bg-blue-700 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+                        >
+                            {authLoading ? (
+                                <>
+                                    <Loader2 className="w-5 h-5 animate-spin" />
+                                    <span>Signing In...</span>
+                                </>
+                            ) : (
+                                <>
+                                    <span>Sign In to Account</span>
+                                    <ArrowRight className="w-5 h-5" />
+                                </>
+                            )}
                         </button>
                     </form>
                     <p className="mt-10 text-center text-slate-500 font-medium">

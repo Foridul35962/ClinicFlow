@@ -128,10 +128,12 @@ interface initialStateType {
     authLoading: boolean
     user: userType | null
     otpLoading: boolean
+    fetchLoading: boolean
 }
 
 const initialState: initialStateType = {
     authLoading: false,
+    fetchLoading:false,
     user: null,
     otpLoading: false
 }
