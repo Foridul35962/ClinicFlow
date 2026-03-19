@@ -547,3 +547,15 @@ export const resendOtp = [
             )
     })
 ]
+
+export const fetchUser = AsyncHandler(async (req, res) => {
+    const user = req.user
+    if (user.image.publicId) {
+        user.image.publicId = undefined
+    }
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(200, user, 'user fetch successfully')
+        )
+})

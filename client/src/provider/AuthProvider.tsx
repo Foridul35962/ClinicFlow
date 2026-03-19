@@ -14,7 +14,7 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     return (
         <>
         {
-            fetchLoading ? <FirstLoad /> : children
+            !fetchLoading ? <FirstLoad /> : children
         }
         </>
     )

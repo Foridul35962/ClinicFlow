@@ -3,23 +3,26 @@
 import React, { useState } from 'react';
 import { Stethoscope, Menu, X, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
+import { useSelector } from 'react-redux';
+import { RootState } from '@/store/store';
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const { user, fetchLoading } = useSelector((state: RootState) => state.auth)
 
   const toggleMenu = () => setIsOpen(!isOpen);
 
   const navLinks = [
     { name: "Doctors", href: "#" },
-    { name: "Departments", href: "#" },
-    { name: "How It Works", href: "#" },
+    { name: "Departments", href: "/depertments" },
+    { name: "How It Works", href: "/works" },
   ];
 
   return (
     <nav className="sticky top-0 z-50 w-full bg-blue-50/80 backdrop-blur-md border-b border-blue-100/50">
       <div className="container mx-auto px-6">
         <div className="flex items-center justify-between h-20">
-          
+
           {/* Left: Logo */}
           <Link href="/" className="flex items-center gap-2 group cursor-pointer">
             <div className="bg-blue-600 p-2 rounded-lg group-hover:rotate-12 transition-transform duration-300 shadow-md shadow-blue-200">
@@ -33,9 +36,9 @@ const Navbar = () => {
           {/* Center: Desktop Menu */}
           <div className="hidden lg:flex items-center gap-8">
             {navLinks.map((link) => (
-              <Link 
+              <Link
                 key={link.name}
-                href={link.href} 
+                href={link.href}
                 className="text-sm font-bold text-slate-600 hover:text-blue-600 transition-colors relative group"
               >
                 {link.name}
@@ -46,20 +49,34 @@ const Navbar = () => {
 
           {/* Right: Auth & CTA (Desktop) */}
           <div className="hidden lg:flex items-center gap-5">
-            <div className="flex items-center gap-4 border-r border-slate-200 pr-5">
-              <Link href="#" className="text-sm font-bold text-slate-700 hover:text-blue-600 transition-colors">Login</Link>
-              <Link href="#" className="text-sm font-bold text-white bg-slate-900 px-5 py-2.5 rounded-xl hover:bg-slate-800 transition-all shadow-sm">
-                Register
+            {/* dashboard */}
+            {
+              user && <div className="flex items-center gap-4 border-r border-slate-200 pr-5">
+                <Link href={`${user.role}/dashboard`} className="text-sm font-bold text-white bg-slate-900 px-5 py-2.5 rounded-xl hover:bg-slate-800 transition-all shadow-sm">
+                  Dashboard
+                </Link>
+              </div>
+            }
+            {!fetchLoading ? (
+              <div className="relative w-27.5 h-12 overflow-hidden rounded-xl bg-blue-600 shadow-sm border border-blue-700">
+
+                <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-linear-to-r from-transparent via-blue-400/20 to-transparent"></div>
+
+                <div className="h-full w-full animate-pulse bg-blue-200/40"></div>
+              </div>
+            ) : (
+              <Link
+                href={'/login'}
+                className="px-8 py-3 bg-blue-600 text-white font-bold rounded-xl shadow-lg shadow-blue-200 hover:bg-blue-700 hover:scale-105 transition-all duration-300 active:scale-95 flex items-center justify-center min-w-27.5"
+              >
+                Login
               </Link>
-            </div>
-            <button className="px-6 py-3 bg-blue-600 text-white font-bold rounded-xl shadow-lg shadow-blue-200 hover:bg-blue-700 hover:scale-105 transition-all duration-300 active:scale-95">
-              Book Appointment
-            </button>
+            )}
           </div>
 
           {/* Mobile Menu Button */}
           <div className="lg:hidden">
-            <button 
+            <button
               onClick={toggleMenu}
               className="p-2 text-slate-600 hover:bg-blue-100 rounded-lg transition-colors focus:outline-none"
             >
@@ -74,7 +91,7 @@ const Navbar = () => {
         <div className="px-6 py-8 space-y-6">
           <div className="flex flex-col gap-4">
             {navLinks.map((link) => (
-              <Link 
+              <Link
                 key={link.name}
                 href={link.href}
                 onClick={() => setIsOpen(false)}
@@ -85,7 +102,7 @@ const Navbar = () => {
               </Link>
             ))}
           </div>
-          
+
           <div className="flex flex-col gap-4 pt-4">
             <Link href="#" className="w-full py-3 text-center font-bold text-slate-700 border border-slate-200 rounded-xl">
               Login
