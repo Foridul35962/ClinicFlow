@@ -6,6 +6,8 @@ import bcrypt from "bcryptjs";
 import ApiResponse from "../helpers/ApiResponse.js";
 import uploadToCloudinary from "../utils/uploadToCloudinary.js";
 import cloudinary from "../config/cloudinary.js";
+import Departments from "../models/Departments.model.js";
+import mongoose from "mongoose";
 
 export const addMember = [
     check('fullName')
@@ -91,10 +93,13 @@ export const addMember = [
             throw new ApiErrors(500, 'user registered failed')
         }
 
+        user.password = undefined
+        user.image.publicId = undefined
+
         return res
             .status(201)
             .json(
-                new ApiResponse(201, {}, 'user registered successfully')
+                new ApiResponse(201, user, 'user registered successfully')
             )
     })
 ]
@@ -204,3 +209,94 @@ export const editMember = [
         );
     })
 ]
+
+export const addDepartment = [
+    check('name')
+        .trim()
+        .notEmpty()
+        .withMessage('Department name is required'),
+    check('description')
+        .optional()
+        .trim(),
+
+    AsyncHandler(async (req, res) => {
+        const { name, description } = req.body
+        const error = validationResult(req)
+        if (!error.isEmpty()) {
+            throw new ApiErrors(400, 'invalid data', error.array())
+        }
+
+        const existingDepartment = await Departments.findOne({
+            name: { $regex: `^${name}$`, $options: 'i' }
+        })
+
+        if (existingDepartment) {
+            throw new ApiErrors(400, 'department is already added')
+        }
+
+        const department = await Departments.create({
+            name,
+            description
+        })
+
+        if (!department) {
+            throw new ApiErrors(500, 'department created failed')
+        }
+
+        return res
+            .status(201)
+            .json(
+                new ApiResponse(201, department, 'department created successfully')
+            )
+    })
+]
+
+export const editDepartment = AsyncHandler(async (req, res) => {
+    const { name, description } = req.body
+    const { departmentId } = req.params
+    if (!departmentId || !mongoose.isValidObjectId(departmentId)) {
+        throw new ApiErrors(400, 'departmentId is required')
+    }
+
+    const department = await Departments.findById(departmentId)
+    if (!department) {
+        throw new ApiErrors(404, 'department is found')
+    }
+
+    if (name) {
+        department.name = name
+    }
+    if (description) {
+        department.description = description
+    }
+
+    const updatedDepartment = await department.save()
+    if (!updatedDepartment) {
+        throw new ApiErrors(500, 'department updated failed')
+    }
+
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(200, updatedDepartment, 'department updated successfully')
+        )
+})
+
+export const deleteDepartment = AsyncHandler(async (req, res) => {
+    const { departmentId } = req.params
+    if (!departmentId || !mongoose.isValidObjectId(departmentId)) {
+        throw new ApiErrors(400, 'departmentId is required')
+    }
+
+    try {
+        await Departments.findByIdAndDelete(departmentId)
+    } catch (error) {
+        throw new ApiErrors(404, 'department is not found')
+    }
+
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(200, departmentId, 'department delete successfully')
+        )
+})

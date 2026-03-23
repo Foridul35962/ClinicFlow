@@ -9,5 +9,8 @@ const adminRouter = express.Router()
 adminRouter.post('/add-member', protect, checkAdmin, upload, adminController.addMember)
 adminRouter.patch('/edit-member/:memberId', protect, checkAdmin, upload, adminController.editMember)
 adminRouter.delete('/delete-member/:memberId', protect, checkAdmin, adminController.deleteMember)
+adminRouter.post('/add-department', protect, checkAdmin, adminController.addDepartment)
+adminRouter.patch('/edit-department/:departmentId', protect, checkAdmin, adminController.editDepartment)
+adminRouter.delete('/delete-department/:departmentId', protect, checkAdmin, adminController.deleteDepartment)
 
 export default adminRouter
