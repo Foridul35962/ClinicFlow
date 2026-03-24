@@ -1,4 +1,4 @@
-import ApiErrors from "../helpers/ApiErrors";
+import ApiErrors from "../helpers/ApiErrors.js";
 import AsyncHandler from "../helpers/AsyncHandler.js";
 
 const checkAdmin = AsyncHandler(async(req, res, next)=>{
