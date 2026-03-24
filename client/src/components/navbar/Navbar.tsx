@@ -14,9 +14,14 @@ const Navbar = () => {
 
   const navLinks = [
     { name: "Doctors", href: "#" },
-    { name: "Departments", href: "/depertments" },
+    { name: "Departments", href: `${user?.role === 'admin' && '/admin'}/departments` },
     { name: "How It Works", href: "/works" },
-  ];
+  ].filter(link => {
+    if (user?.role === 'admin' && link.name === "How It Works") {
+      return false;
+    }
+    return true;
+  });
 
   return (
     <nav className="sticky top-0 z-50 w-full bg-blue-50/80 backdrop-blur-md border-b border-blue-100/50">

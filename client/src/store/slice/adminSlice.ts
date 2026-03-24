@@ -108,9 +108,43 @@ const adminSlice = createSlice({
     reducers:{},
     extraReducers: (builder)=>{
         //add member
+        // builder
+        //     .addCase(addMember.pending, (state)=>{
+        //         state.adminLoading = true
+        //     })
+
+        //add department
         builder
-            .addCase(addMember.pending, (state)=>{
+            .addCase(addDepartment.pending, (state)=>{
                 state.adminLoading = true
+            })
+            .addCase(addDepartment.fulfilled, (state)=>{
+                state.adminLoading = false
+            })
+            .addCase(addDepartment.rejected, (state)=>{
+                state.adminLoading = false
+            })
+        //edit department
+        builder
+            .addCase(editDepartment.pending, (state)=>{
+                state.adminLoading = true
+            })
+            .addCase(editDepartment.fulfilled, (state)=>{
+                state.adminLoading = false
+            })
+            .addCase(editDepartment.rejected, (state)=>{
+                state.adminLoading = false
+            })
+        //delete department
+        builder
+            .addCase(deleteDepartment.pending, (state)=>{
+                state.adminLoading = true
+            })
+            .addCase(deleteDepartment.fulfilled, (state)=>{
+                state.adminLoading = false
+            })
+            .addCase(deleteDepartment.rejected, (state)=>{
+                state.adminLoading = false
             })
     }
 })
