@@ -8,6 +8,7 @@ import uploadToCloudinary from "../utils/uploadToCloudinary.js";
 import cloudinary from "../config/cloudinary.js";
 import Departments from "../models/Departments.model.js";
 import mongoose from "mongoose";
+import redis from "../db/redis.js";
 
 export const addMember = [
     check('fullName')
@@ -243,6 +244,14 @@ export const addDepartment = [
             throw new ApiErrors(500, 'department created failed')
         }
 
+        const redisKey = 'allDepartments'
+        await redis.del(redisKey)
+
+        await fetch(
+            `${process.env.NEXT_APP_URL}/api/revalidate?secret=${process.env.REVALIDATE_SECRET}`,
+            { method: 'POST' }
+        )
+
         return res
             .status(201)
             .json(
@@ -275,6 +284,14 @@ export const editDepartment = AsyncHandler(async (req, res) => {
         throw new ApiErrors(500, 'department updated failed')
     }
 
+    const redisKey = 'allDepartments'
+    await redis.del(redisKey)
+
+    await fetch(
+        `${process.env.NEXT_APP_URL}/api/revalidate?secret=${process.env.REVALIDATE_SECRET}`,
+        { method: 'POST' }
+    )
+
     return res
         .status(200)
         .json(
@@ -293,6 +310,14 @@ export const deleteDepartment = AsyncHandler(async (req, res) => {
     } catch (error) {
         throw new ApiErrors(404, 'department is not found')
     }
+
+    const redisKey = 'allDepartments'
+    await redis.del(redisKey)
+
+    await fetch(
+        `${process.env.NEXT_APP_URL}/api/revalidate?secret=${process.env.REVALIDATE_SECRET}`,
+        { method: 'POST' }
+    )
 
     return res
         .status(200)
