@@ -9,8 +9,9 @@ import cloudinary from "../config/cloudinary.js";
 import Departments from "../models/Departments.model.js";
 import mongoose from "mongoose";
 import redis from "../db/redis.js";
+import Doctors from "../models/Doctors.model.js";
 
-export const addMember = [
+export const addReceptionist = [
     check('fullName')
         .trim()
         .notEmpty()
@@ -37,20 +38,12 @@ export const addMember = [
         .withMessage('password must contain a letter')
         .matches(/[0-9]/)
         .withMessage('password must contain a number'),
-    check('role')
-        .trim()
-        .notEmpty()
-        .withMessage('Role is required'),
 
     AsyncHandler(async (req, res) => {
-        const { fullName, email, password, role, phoneNumber } = req.body
+        const { fullName, email, password, phoneNumber } = req.body
         const error = validationResult(req)
         if (!error.isEmpty()) {
             throw new ApiErrors(400, 'invalid value', error.array())
-        }
-
-        if (!['receptionist', 'doctor'].includes(role)) {
-            throw new ApiErrors(400, 'invalid role')
         }
 
         const image = req.files?.[0]
@@ -84,7 +77,7 @@ export const addMember = [
         const user = await Users.create({
             email,
             password: hashedPass,
-            role,
+            role: 'receptionist',
             phoneNumber,
             fullName,
             image: upload
@@ -100,39 +93,39 @@ export const addMember = [
         return res
             .status(201)
             .json(
-                new ApiResponse(201, user, 'user registered successfully')
+                new ApiResponse(201, user, 'receptionist registered successfully')
             )
     })
 ]
 
-export const deleteMember = AsyncHandler(async (req, res) => {
-    const { memberId } = req.params
+export const deleteReceptionist = AsyncHandler(async (req, res) => {
+    const { receptionistId } = req.params
 
-    if (!memberId) {
-        throw new ApiErrors(400, 'member id is required')
+    if (!receptionistId) {
+        throw new ApiErrors(400, 'receptionist id is required')
     }
 
-    const member = await Users.findById(memberId)
-    if (!member) {
-        throw new ApiErrors(404, 'member is not found')
+    const receptionist = await Users.findById(receptionistId)
+    if (!receptionist) {
+        throw new ApiErrors(404, 'receptionist is not found')
     }
 
     try {
-        await cloudinary.uploader.destroy(member.image.publicId)
+        await cloudinary.uploader.destroy(receptionist.image.publicId)
     } catch (error) {
         throw new ApiErrors(500, 'image deleted failed')
     }
 
-    await member.deleteOne()
+    await receptionist.deleteOne()
 
     return res
         .status(200)
         .json(
-            new ApiResponse(200, memberId, 'member deleted successfully')
+            new ApiResponse(200, receptionistId, 'receptionist deleted successfully')
         )
 })
 
-export const editMember = [
+export const editReceptionist = [
     check('fullName')
         .optional()
         .trim()
@@ -146,10 +139,10 @@ export const editMember = [
 
     AsyncHandler(async (req, res) => {
         const { fullName, phoneNumber } = req.body;
-        const { memberId } = req.params;
+        const { receptionistId } = req.params;
 
-        if (!memberId) {
-            throw new ApiErrors(400, "member id is required");
+        if (!receptionistId) {
+            throw new ApiErrors(400, "receptionist id is required");
         }
 
         const errors = validationResult(req);
@@ -161,17 +154,17 @@ export const editMember = [
             throw new ApiErrors(400, "at least one field is required");
         }
 
-        const member = await Users.findById(memberId);
-        if (!member) {
-            throw new ApiErrors(404, "member is not found");
+        const receptionist = await Users.findById(receptionistId);
+        if (!receptionist) {
+            throw new ApiErrors(404, "receptionist is not found");
         }
 
         if (fullName) {
-            member.fullName = fullName
+            receptionist.fullName = fullName
         }
 
         if (phoneNumber) {
-            member.phoneNumber = phoneNumber;
+            receptionist.phoneNumber = phoneNumber;
         }
 
         // Handle image
@@ -185,11 +178,11 @@ export const editMember = [
             try {
                 const uploaded = await uploadToCloudinary(image, "ClinicFlow");
 
-                if (member.image?.publicId) {
-                    await cloudinary.uploader.destroy(member.image.publicId);
+                if (receptionist.image?.publicId) {
+                    await cloudinary.uploader.destroy(receptionist.image.publicId);
                 }
 
-                member.image = {
+                receptionist.image = {
                     url: uploaded.secure_url,
                     publicId: uploaded.public_id,
                 };
@@ -198,15 +191,15 @@ export const editMember = [
             }
         }
 
-        await member.save();
+        await receptionist.save();
 
-        member.password = undefined;
-        if (member.image) {
-            member.image.publicId = undefined;
+        receptionist.password = undefined;
+        if (receptionist.image) {
+            receptionist.image.publicId = undefined;
         }
 
         return res.status(200).json(
-            new ApiResponse(200, member, "member updated successfully")
+            new ApiResponse(200, receptionist, "receptionist updated successfully")
         );
     })
 ]
@@ -324,4 +317,415 @@ export const deleteDepartment = AsyncHandler(async (req, res) => {
         .json(
             new ApiResponse(200, departmentId, 'department delete successfully')
         )
+})
+
+export const getDoctors = AsyncHandler(async (req, res) => {
+    let doctors
+
+    const doctorKey = 'doctors:all'
+    const redisDoctor = await redis.get(doctorKey)
+
+    if (redisDoctor) {
+        doctors = JSON.parse(redisDoctor)
+    } else {
+        doctors = await Doctors.find()
+            .populate('userId departmentId')
+            .select('-userId.password')
+            .select('-userId.image.publicId')
+            .lean()
+
+        await redis.set(
+            doctorKey,
+            JSON.stringify(doctors),
+            "EX",
+            600
+        )
+    }
+
+    return res.status(200).json(
+        new ApiResponse(200, doctors, 'doctors fetch successful')
+    )
+})
+
+export const addDoctor = [
+    // User fields
+    check('fullName')
+        .trim()
+        .notEmpty()
+        .withMessage('FullName is required'),
+
+    check('email')
+        .trim()
+        .notEmpty()
+        .withMessage('Email is required')
+        .isEmail()
+        .withMessage('Enter a valid Email'),
+
+    check('phoneNumber')
+        .trim()
+        .notEmpty()
+        .withMessage('phoneNumber is required')
+        .isMobilePhone('bn-BD')
+        .withMessage('phoneNumber is invalid'),
+
+    check('password')
+        .notEmpty()
+        .withMessage('password is required')
+        .isLength({ min: 8 })
+        .withMessage('password must be at least 8 characters')
+        .matches(/[a-zA-Z]/)
+        .withMessage('password must contain a letter')
+        .matches(/[0-9]/)
+        .withMessage('password must contain a number'),
+
+    // Doctor fields
+    check('departmentId')
+        .notEmpty()
+        .withMessage('departmentId is required')
+        .isMongoId()
+        .withMessage('Invalid departmentId'),
+
+    check('chamberNumber')
+        .trim()
+        .notEmpty()
+        .withMessage('chamberNumber is required'),
+
+    check('consultationFee')
+        .notEmpty()
+        .withMessage('consultationFee is required')
+        .isFloat({ min: 0 })
+        .withMessage('consultationFee must be a positive number'),
+
+    check('slotDuration')
+        .optional()
+        .isInt({ min: 1 })
+        .withMessage('slotDuration must be at least 1 minute'),
+
+    // Schedule
+    check('schedule')
+        .isArray({ min: 1 })
+        .withMessage('schedule must be a non-empty array'),
+
+    check('schedule.*.dayOfWeek')
+        .notEmpty()
+        .withMessage('dayOfWeek is required')
+        .isIn(["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"])
+        .withMessage('Invalid dayOfWeek'),
+
+    check('schedule.*.startTime')
+        .notEmpty()
+        .withMessage('startTime is required')
+        .matches(/^([01]\d|2[0-3]):([0-5]\d)$/)
+        .withMessage('startTime must be HH:MM format'),
+
+    check('schedule.*.endTime')
+        .notEmpty()
+        .withMessage('endTime is required')
+        .matches(/^([01]\d|2[0-3]):([0-5]\d)$/)
+        .withMessage('endTime must be HH:MM format'),
+
+    check('schedule').custom((schedule) => {
+        for (let slot of schedule) {
+            const [sh, sm] = slot.startTime.split(':').map(Number);
+            const [eh, em] = slot.endTime.split(':').map(Number);
+
+            const start = sh * 60 + sm;
+            const end = eh * 60 + em;
+
+            if (start >= end) {
+                throw new Error('startTime must be less than endTime');
+            }
+        }
+        return true;
+    }),
+
+    // Controller
+    AsyncHandler(async (req, res) => {
+        const error = validationResult(req)
+        if (!error.isEmpty()) {
+            throw new ApiErrors(400, 'invalid data', error.array())
+        }
+
+        const {
+            fullName,
+            email,
+            password,
+            phoneNumber,
+            departmentId,
+            chamberNumber,
+            consultationFee,
+            slotDuration,
+            schedule
+        } = req.body
+
+        const image = req.files?.[0]
+        if (!image) {
+            throw new ApiErrors(400, 'image not found')
+        }
+
+        if (!image.mimetype.startsWith('image/')) {
+            throw new ApiErrors(400, 'only image files are allowed')
+        }
+
+        const existingUser = await Users.findOne({ email })
+        if (existingUser) {
+            throw new ApiErrors(400, 'Doctor is already registered')
+        }
+
+        const hashedPass = await bcrypt.hash(password, 12)
+
+        // Start transaction
+        const session = await mongoose.startSession()
+        session.startTransaction()
+
+        let upload
+
+        try {
+            // Upload image
+            const uploaded = await uploadToCloudinary(image, 'ClinicFlow')
+            upload = {
+                url: uploaded.secure_url,
+                publicId: uploaded.public_id
+            }
+
+            // Create user
+            const user = await Users.create([{
+                email,
+                password: hashedPass,
+                fullName,
+                image: upload,
+                phoneNumber,
+                role: "doctor"
+            }], { session })
+
+            // Create doctor
+            const doctor = await Doctors.create([{
+                userId: user[0]._id,
+                chamberNumber,
+                consultationFee,
+                departmentId,
+                schedule,
+                slotDuration
+            }], { session })
+
+            await session.commitTransaction()
+            session.endSession()
+
+            // populate
+            const populatedDoctor = await Doctors.findById(doctor[0]._id)
+                .populate('userId departmentId')
+                .select('-userId.password -userId.image.publicId')
+
+            return res.status(201).json(
+                new ApiResponse(201, populatedDoctor, 'doctor added successfully')
+            )
+
+        } catch (err) {
+            await session.abortTransaction()
+            session.endSession()
+            throw new ApiErrors(500, 'Doctor creation failed')
+        }
+    })
+]
+
+export const editDoctor = [
+    // User fields
+    check('fullName')
+        .optional()
+        .trim()
+        .notEmpty()
+        .withMessage('FullName cannot be empty'),
+
+    check('phoneNumber')
+        .optional()
+        .trim()
+        .isMobilePhone('bn-BD')
+        .withMessage('phoneNumber is invalid'),
+
+    // Doctor fields
+    check('departmentId')
+        .optional()
+        .isMongoId()
+        .withMessage('Invalid departmentId'),
+
+    check('chamberNumber')
+        .optional()
+        .trim()
+        .notEmpty()
+        .withMessage('chamberNumber cannot be empty'),
+
+    check('consultationFee')
+        .optional()
+        .isFloat({ min: 0 })
+        .withMessage('consultationFee must be a positive number'),
+
+    check('slotDuration')
+        .optional()
+        .isInt({ min: 1 })
+        .withMessage('slotDuration must be at least 1 minute'),
+
+    // 🔹 Schedule
+    check('schedule')
+        .optional()
+        .isArray({ min: 1 })
+        .withMessage('schedule must be a non-empty array'),
+
+    check('schedule.*.dayOfWeek')
+        .optional()
+        .isIn(["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"])
+        .withMessage('Invalid dayOfWeek'),
+
+    check('schedule.*.startTime')
+        .optional()
+        .matches(/^([01]\d|2[0-3]):([0-5]\d)$/)
+        .withMessage('startTime must be HH:MM format'),
+
+    check('schedule.*.endTime')
+        .optional()
+        .matches(/^([01]\d|2[0-3]):([0-5]\d)$/)
+        .withMessage('endTime must be HH:MM format'),
+
+    check('schedule').optional().custom((schedule) => {
+        if (!schedule) return true;
+        for (let slot of schedule) {
+            const [sh, sm] = slot.startTime.split(':').map(Number);
+            const [eh, em] = slot.endTime.split(':').map(Number);
+
+            const start = sh * 60 + sm;
+            const end = eh * 60 + em;
+
+            if (start >= end) {
+                throw new Error('startTime must be less than endTime');
+            }
+        }
+        return true;
+    }),
+
+    // Controller
+    AsyncHandler(async (req, res) => {
+        const error = validationResult(req)
+        if (!error.isEmpty()) {
+            throw new ApiErrors(400, 'invalid data', error.array())
+        }
+
+        const { doctorId } = req.params
+        if (!doctorId) {
+            throw new ApiErrors(400, 'doctorId is required')
+        }
+
+        const {
+            fullName,
+            phoneNumber,
+            departmentId,
+            chamberNumber,
+            consultationFee,
+            slotDuration,
+            schedule
+        } = req.body
+
+        const image = req.files?.[0]
+
+        const session = await mongoose.startSession()
+        session.startTransaction()
+
+        try {
+            // Find doctor
+            const doctor = await Doctors.findById(doctorId).session(session)
+            if (!doctor) {
+                throw new ApiErrors(404, 'Doctor not found')
+            }
+
+            // Update user
+            const userUpdates = {}
+            if (fullName) userUpdates.fullName = fullName
+            if (phoneNumber) userUpdates.phoneNumber = phoneNumber
+
+            if (image) {
+                if (!image.mimetype.startsWith('image/')) {
+                    throw new ApiErrors(400, 'only image files are allowed')
+                }
+                const uploaded = await uploadToCloudinary(image, 'ClinicFlow')
+                userUpdates.image = {
+                    url: uploaded.secure_url,
+                    publicId: uploaded.public_id
+                }
+            }
+
+            if (Object.keys(userUpdates).length > 0) {
+                await Users.findByIdAndUpdate(doctor.userId, userUpdates, { session })
+            }
+
+            // Update doctor fields
+            const doctorUpdates = {}
+            if (departmentId) doctorUpdates.departmentId = departmentId
+            if (chamberNumber) doctorUpdates.chamberNumber = chamberNumber
+            if (consultationFee !== undefined) doctorUpdates.consultationFee = consultationFee
+            if (slotDuration) doctorUpdates.slotDuration = slotDuration
+            if (schedule) doctorUpdates.schedule = schedule
+
+            if (Object.keys(doctorUpdates).length > 0) {
+                await Doctors.findByIdAndUpdate(doctorId, doctorUpdates, { session })
+            }
+
+            await session.commitTransaction()
+            session.endSession()
+
+            const populatedDoctor = await Doctors.findById(doctorId)
+                .populate('userId departmentId')
+                .select('-userId.password -userId.image.publicId')
+
+            return res.status(200).json(
+                new ApiResponse(200, populatedDoctor, 'doctor updated successfully')
+            )
+        } catch (err) {
+            await session.abortTransaction()
+            session.endSession()
+            throw new ApiErrors(500, 'Doctor update failed')
+        }
+    })
+]
+
+export const deleteDoctor = AsyncHandler(async (req, res) => {
+    const { doctorId } = req.params
+
+    if (!doctorId) {
+        throw new ApiErrors(400, 'doctor id is required')
+    }
+
+    const session = await mongoose.startSession()
+    session.startTransaction()
+
+    try {
+        const doctor = await Doctors.findById(doctorId).session(session)
+        if (!doctor) {
+            throw new ApiErrors(404, 'Doctor not found')
+        }
+
+        const user = await Users.findById(doctor.userId).session(session)
+
+        await Doctors.findByIdAndDelete(doctorId, { session })
+
+        // 🔹 Delete user
+        await Users.findByIdAndDelete(doctor.userId, { session })
+
+        await session.commitTransaction()
+        session.endSession()
+
+        if (user?.image?.publicId) {
+            try {
+                await cloudinary.uploader.destroy(user.image.publicId)
+            } catch (err) {
+                console.log('image delete failed:', err)
+            }
+        }
+
+        return res.status(200).json(
+            new ApiResponse(200, null, 'doctor deleted successfully')
+        )
+
+    } catch (err) {
+        await session.abortTransaction()
+        session.endSession()
+        throw new ApiErrors(500, 'Doctor deletion failed')
+    }
 })
