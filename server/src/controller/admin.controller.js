@@ -720,7 +720,7 @@ export const deleteDoctor = AsyncHandler(async (req, res) => {
         }
 
         return res.status(200).json(
-            new ApiResponse(200, null, 'doctor deleted successfully')
+            new ApiResponse(200, doctorId, 'doctor deleted successfully')
         )
 
     } catch (err) {
