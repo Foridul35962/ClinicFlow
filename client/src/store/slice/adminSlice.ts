@@ -1,14 +1,22 @@
-import { addDepartmentType, addMemberType, editMemberType, editDepartmentType } from "@/types/member";
+import {
+    addDepartmentType,
+    addDoctorType,
+    addReceptionistType,
+    editDepartmentType,
+    editDoctorType,
+    editReceptionistType
+} from "@/types/member";
+
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import axios, { AxiosError } from "axios";
 
 const SERVER_URL = `${process.env.NEXT_PUBLIC_SERVER_URL}/api/admin`
 
-export const addMember = createAsyncThunk(
-    "admin/addMember",
-    async (data: addMemberType, { rejectWithValue }) => {
+export const addReceptionist = createAsyncThunk(
+    "admin/addreceptionist",
+    async (data: addReceptionistType, { rejectWithValue }) => {
         try {
-            const res = await axios.post(`${SERVER_URL}/add-member`, data,
+            const res = await axios.post(`${SERVER_URL}/add-receptionist`, data,
                 { withCredentials: true }
             )
             return res.data
@@ -19,12 +27,12 @@ export const addMember = createAsyncThunk(
     }
 )
 
-export const editMember = createAsyncThunk(
-    "admin/editMember",
-    async ({ data, memberId }: { data: editMemberType, memberId: string }, {rejectWithValue}) => {
+export const editReceptionist = createAsyncThunk(
+    "admin/editreceptionist",
+    async ({ data, receptionistId }: { data: editReceptionistType, receptionistId: string }, { rejectWithValue }) => {
         try {
-            const res = await axios.patch(`${SERVER_URL}/edit-member/${memberId}`, data,
-                {withCredentials: true}
+            const res = await axios.patch(`${SERVER_URL}/edit-receptionist/${receptionistId}`, data,
+                { withCredentials: true }
             )
             return res.data
         } catch (error) {
@@ -34,12 +42,12 @@ export const editMember = createAsyncThunk(
     }
 )
 
-export const deleteMember = createAsyncThunk(
-    "admin/deleteMember",
-    async(memberId:string, {rejectWithValue})=>{
+export const deleteReceptionist = createAsyncThunk(
+    "admin/deletereceptionist",
+    async (receptionistId: string, { rejectWithValue }) => {
         try {
-            const res = await axios.delete(`${SERVER_URL}/delete-member/${memberId}`,
-                {withCredentials: true}
+            const res = await axios.delete(`${SERVER_URL}/delete-receptionist/${receptionistId}`,
+                { withCredentials: true }
             )
             return res.data
         } catch (error) {
@@ -51,10 +59,10 @@ export const deleteMember = createAsyncThunk(
 
 export const addDepartment = createAsyncThunk(
     "admin/addDepartment",
-    async(data:addDepartmentType, {rejectWithValue})=>{
+    async (data: addDepartmentType, { rejectWithValue }) => {
         try {
             const res = await axios.post(`${SERVER_URL}/add-department`, data,
-                {withCredentials: true}
+                { withCredentials: true }
             )
             return res.data
         } catch (error) {
@@ -66,10 +74,10 @@ export const addDepartment = createAsyncThunk(
 
 export const editDepartment = createAsyncThunk(
     "admin/editDepartment",
-    async({data, departmentId}:{data:editDepartmentType, departmentId: string}, {rejectWithValue})=>{
+    async ({ data, departmentId }: { data: editDepartmentType, departmentId: string }, { rejectWithValue }) => {
         try {
             const res = await axios.patch(`${SERVER_URL}/edit-department/${departmentId}`, data,
-                {withCredentials: true}
+                { withCredentials: true }
             )
             return res.data
         } catch (error) {
@@ -81,10 +89,10 @@ export const editDepartment = createAsyncThunk(
 
 export const deleteDepartment = createAsyncThunk(
     "admin/deleteDepartment",
-    async(departmentId:string, {rejectWithValue})=>{
+    async (departmentId: string, { rejectWithValue }) => {
         try {
             const res = await axios.delete(`${SERVER_URL}/delete-department/${departmentId}`,
-                {withCredentials: true}
+                { withCredentials: true }
             )
             return res.data
         } catch (error) {
@@ -94,56 +102,116 @@ export const deleteDepartment = createAsyncThunk(
     }
 )
 
-interface initialStateType{
+export const getAllDoctors = createAsyncThunk(
+    "admin/allDoctors",
+    async (_: null, { rejectWithValue }) => {
+        try {
+            const res = await axios.get(`${SERVER_URL}/all-doctors`, {
+                withCredentials: true
+            })
+            return res.data
+        } catch (error) {
+            const err = error as AxiosError<any>
+            return rejectWithValue(err?.response?.data || "Something went wrong")
+        }
+    }
+)
+
+export const addDoctor = createAsyncThunk(
+    "admin/addDoctor",
+    async (data: addDoctorType, { rejectWithValue }) => {
+        try {
+            const res = await axios.post(`${SERVER_URL}/add-doctor`, data,
+                { withCredentials: true }
+            )
+            return res.data
+        } catch (error) {
+            const err = error as AxiosError<any>
+            return rejectWithValue(err?.response?.data || "Something went wrong")
+        }
+    }
+)
+
+export const editDoctor = createAsyncThunk(
+    "admin/editDoctor",
+    async ({ data, doctorId }: { data: editDoctorType, doctorId: string }, { rejectWithValue }) => {
+        try {
+            const res = await axios.patch(`${SERVER_URL}/edit-doctor/${doctorId}`, data,
+                { withCredentials: true }
+            )
+            return res.data
+        } catch (error) {
+            const err = error as AxiosError<any>
+            return rejectWithValue(err?.response?.data || "Something went wrong")
+        }
+    }
+)
+
+export const deleteDoctor = createAsyncThunk(
+    "admin/deleteDoctor",
+    async ({ doctorId }: { doctorId: string }, { rejectWithValue }) => {
+        try {
+            const res = await axios.delete(`${SERVER_URL}/delete-doctor/${doctorId}`,
+                { withCredentials: true }
+            )
+            return res.data
+        } catch (error) {
+            const err = error as AxiosError<any>
+            return rejectWithValue(err?.response?.data || "Something went wrong")
+        }
+    }
+)
+
+interface initialStateType {
     adminLoading: boolean
 }
 
-const initialState:initialStateType={
-    adminLoading:false
+const initialState: initialStateType = {
+    adminLoading: false
 }
 
 const adminSlice = createSlice({
     name: 'admin',
     initialState,
-    reducers:{},
-    extraReducers: (builder)=>{
-        //add member
+    reducers: {},
+    extraReducers: (builder) => {
+        //add receptionist
         // builder
-        //     .addCase(addMember.pending, (state)=>{
+        //     .addCase(addreceptionist.pending, (state)=>{
         //         state.adminLoading = true
         //     })
 
         //add department
         builder
-            .addCase(addDepartment.pending, (state)=>{
+            .addCase(addDepartment.pending, (state) => {
                 state.adminLoading = true
             })
-            .addCase(addDepartment.fulfilled, (state)=>{
+            .addCase(addDepartment.fulfilled, (state) => {
                 state.adminLoading = false
             })
-            .addCase(addDepartment.rejected, (state)=>{
+            .addCase(addDepartment.rejected, (state) => {
                 state.adminLoading = false
             })
         //edit department
         builder
-            .addCase(editDepartment.pending, (state)=>{
+            .addCase(editDepartment.pending, (state) => {
                 state.adminLoading = true
             })
-            .addCase(editDepartment.fulfilled, (state)=>{
+            .addCase(editDepartment.fulfilled, (state) => {
                 state.adminLoading = false
             })
-            .addCase(editDepartment.rejected, (state)=>{
+            .addCase(editDepartment.rejected, (state) => {
                 state.adminLoading = false
             })
         //delete department
         builder
-            .addCase(deleteDepartment.pending, (state)=>{
+            .addCase(deleteDepartment.pending, (state) => {
                 state.adminLoading = true
             })
-            .addCase(deleteDepartment.fulfilled, (state)=>{
+            .addCase(deleteDepartment.fulfilled, (state) => {
                 state.adminLoading = false
             })
-            .addCase(deleteDepartment.rejected, (state)=>{
+            .addCase(deleteDepartment.rejected, (state) => {
                 state.adminLoading = false
             })
     }
