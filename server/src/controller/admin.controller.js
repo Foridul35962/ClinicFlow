@@ -329,9 +329,14 @@ export const getDoctors = AsyncHandler(async (req, res) => {
         doctors = JSON.parse(redisDoctor)
     } else {
         doctors = await Doctors.find()
-            .populate('userId departmentId')
-            .select('-userId.password')
-            .select('-userId.image.publicId')
+            .populate({
+                path: 'userId',
+                select: '-password -image.publicId'
+            })
+            .populate({
+                path:'departmentId',
+                select: '-chamberNumber -consultationFee -slotDuration'
+            })
             .lean()
 
         await redis.set(
@@ -348,6 +353,17 @@ export const getDoctors = AsyncHandler(async (req, res) => {
 })
 
 export const addDoctor = [
+    (req, res, next) => {
+        if (req.body.schedule && typeof req.body.schedule === "string") {
+            try {
+                req.body.schedule = JSON.parse(req.body.schedule)
+            } catch (err) {
+                throw new ApiErrors(400, 'Invalid schedule JSON format')
+            }
+        }
+        next()
+    },
+
     // User fields
     check('fullName')
         .trim()
@@ -472,23 +488,25 @@ export const addDoctor = [
             throw new ApiErrors(400, 'Doctor is already registered')
         }
 
+        const existingDepartment = await Departments.findById(departmentId)
+        if (!existingDepartment) {
+            throw new ApiErrors(404, 'department not found')
+        }
+
         const hashedPass = await bcrypt.hash(password, 12)
 
-        // Start transaction
         const session = await mongoose.startSession()
         session.startTransaction()
 
         let upload
 
         try {
-            // Upload image
-            const uploaded = await uploadToCloudinary(image, 'ClinicFlow')
+            const uploaded = await uploadToCloudinary(image.buffer, 'ClinicFlow')
             upload = {
                 url: uploaded.secure_url,
                 publicId: uploaded.public_id
             }
 
-            // Create user
             const user = await Users.create([{
                 email,
                 password: hashedPass,
@@ -498,7 +516,6 @@ export const addDoctor = [
                 role: "doctor"
             }], { session })
 
-            // Create doctor
             const doctor = await Doctors.create([{
                 userId: user[0]._id,
                 chamberNumber,
@@ -511,7 +528,6 @@ export const addDoctor = [
             await session.commitTransaction()
             session.endSession()
 
-            // populate
             const populatedDoctor = await Doctors.findById(doctor[0]._id)
                 .populate('userId departmentId')
                 .select('-userId.password -userId.image.publicId')
@@ -523,6 +539,7 @@ export const addDoctor = [
         } catch (err) {
             await session.abortTransaction()
             session.endSession()
+            console.log(err)
             throw new ApiErrors(500, 'Doctor creation failed')
         }
     })
@@ -564,56 +581,66 @@ export const editDoctor = [
         .isInt({ min: 1 })
         .withMessage('slotDuration must be at least 1 minute'),
 
-    // 🔹 Schedule
+    // Schedule
     check('schedule')
         .optional()
-        .isArray({ min: 1 })
-        .withMessage('schedule must be a non-empty array'),
+        .custom((value) => {
+            if (!value) return true;
 
-    check('schedule.*.dayOfWeek')
-        .optional()
-        .isIn(["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"])
-        .withMessage('Invalid dayOfWeek'),
-
-    check('schedule.*.startTime')
-        .optional()
-        .matches(/^([01]\d|2[0-3]):([0-5]\d)$/)
-        .withMessage('startTime must be HH:MM format'),
-
-    check('schedule.*.endTime')
-        .optional()
-        .matches(/^([01]\d|2[0-3]):([0-5]\d)$/)
-        .withMessage('endTime must be HH:MM format'),
-
-    check('schedule').optional().custom((schedule) => {
-        if (!schedule) return true;
-        for (let slot of schedule) {
-            const [sh, sm] = slot.startTime.split(':').map(Number);
-            const [eh, em] = slot.endTime.split(':').map(Number);
-
-            const start = sh * 60 + sm;
-            const end = eh * 60 + em;
-
-            if (start >= end) {
-                throw new Error('startTime must be less than endTime');
+            // If form-data, parse string to array
+            let scheduleArray;
+            if (typeof value === "string") {
+                try {
+                    scheduleArray = JSON.parse(value);
+                } catch {
+                    throw new Error('schedule must be a valid JSON array');
+                }
+            } else {
+                scheduleArray = value;
             }
-        }
-        return true;
-    }),
+
+            if (!Array.isArray(scheduleArray) || scheduleArray.length === 0) {
+                throw new Error('schedule must be a non-empty array');
+            }
+
+            // Validate each slot
+            for (let slot of scheduleArray) {
+                if (!slot.dayOfWeek || !["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].includes(slot.dayOfWeek)) {
+                    throw new Error('Invalid dayOfWeek in schedule');
+                }
+                if (!slot.startTime || !/^([01]\d|2[0-3]):([0-5]\d)$/.test(slot.startTime)) {
+                    throw new Error('startTime must be HH:MM format');
+                }
+                if (!slot.endTime || !/^([01]\d|2[0-3]):([0-5]\d)$/.test(slot.endTime)) {
+                    throw new Error('endTime must be HH:MM format');
+                }
+
+                const [sh, sm] = slot.startTime.split(':').map(Number);
+                const [eh, em] = slot.endTime.split(':').map(Number);
+                const start = sh * 60 + sm;
+                const end = eh * 60 + em;
+
+                if (start >= end) {
+                    throw new Error('startTime must be less than endTime');
+                }
+            }
+
+            return true;
+        }),
 
     // Controller
     AsyncHandler(async (req, res) => {
-        const error = validationResult(req)
+        const error = validationResult(req);
         if (!error.isEmpty()) {
-            throw new ApiErrors(400, 'invalid data', error.array())
+            throw new ApiErrors(400, 'invalid data', error.array());
         }
 
-        const { doctorId } = req.params
+        const { doctorId } = req.params;
         if (!doctorId) {
-            throw new ApiErrors(400, 'doctorId is required')
+            throw new ApiErrors(400, 'doctorId is required');
         }
 
-        const {
+        let {
             fullName,
             phoneNumber,
             departmentId,
@@ -621,69 +648,85 @@ export const editDoctor = [
             consultationFee,
             slotDuration,
             schedule
-        } = req.body
+        } = req.body;
 
-        const image = req.files?.[0]
+        const image = req.files?.[0];
 
-        const session = await mongoose.startSession()
-        session.startTransaction()
+        // Parse schedule if it's string (form-data)
+        if (schedule && typeof schedule === "string") {
+            try {
+                schedule = JSON.parse(schedule);
+            } catch {
+                throw new ApiErrors(400, 'schedule must be a valid JSON array');
+            }
+        }
+
+        if (departmentId) {
+            const existingDepartment = await Departments.findById(departmentId);
+            if (!existingDepartment) {
+                throw new ApiErrors(404, 'department not found');
+            }
+        }
+
+        const session = await mongoose.startSession();
+        session.startTransaction();
 
         try {
             // Find doctor
-            const doctor = await Doctors.findById(doctorId).session(session)
+            const doctor = await Doctors.findById(doctorId).session(session);
             if (!doctor) {
-                throw new ApiErrors(404, 'Doctor not found')
+                throw new ApiErrors(404, 'Doctor not found');
             }
 
             // Update user
-            const userUpdates = {}
-            if (fullName) userUpdates.fullName = fullName
-            if (phoneNumber) userUpdates.phoneNumber = phoneNumber
+            const userUpdates = {};
+            if (fullName) userUpdates.fullName = fullName;
+            if (phoneNumber) userUpdates.phoneNumber = phoneNumber;
 
             if (image) {
                 if (!image.mimetype.startsWith('image/')) {
-                    throw new ApiErrors(400, 'only image files are allowed')
+                    throw new ApiErrors(400, 'only image files are allowed');
                 }
-                const uploaded = await uploadToCloudinary(image, 'ClinicFlow')
+                const uploaded = await uploadToCloudinary(image.buffer, 'ClinicFlow');
                 userUpdates.image = {
                     url: uploaded.secure_url,
                     publicId: uploaded.public_id
-                }
+                };
             }
 
             if (Object.keys(userUpdates).length > 0) {
-                await Users.findByIdAndUpdate(doctor.userId, userUpdates, { session })
+                await Users.findByIdAndUpdate(doctor.userId, userUpdates, { session });
             }
 
             // Update doctor fields
-            const doctorUpdates = {}
-            if (departmentId) doctorUpdates.departmentId = departmentId
-            if (chamberNumber) doctorUpdates.chamberNumber = chamberNumber
-            if (consultationFee !== undefined) doctorUpdates.consultationFee = consultationFee
-            if (slotDuration) doctorUpdates.slotDuration = slotDuration
-            if (schedule) doctorUpdates.schedule = schedule
+            const doctorUpdates = {};
+            if (departmentId) doctorUpdates.departmentId = departmentId;
+            if (chamberNumber) doctorUpdates.chamberNumber = chamberNumber;
+            if (consultationFee !== undefined) doctorUpdates.consultationFee = consultationFee;
+            if (slotDuration) doctorUpdates.slotDuration = slotDuration;
+            if (schedule) doctorUpdates.schedule = schedule;
 
             if (Object.keys(doctorUpdates).length > 0) {
-                await Doctors.findByIdAndUpdate(doctorId, doctorUpdates, { session })
+                await Doctors.findByIdAndUpdate(doctorId, doctorUpdates, { session });
             }
 
-            await session.commitTransaction()
-            session.endSession()
+            await session.commitTransaction();
+            session.endSession();
 
             const populatedDoctor = await Doctors.findById(doctorId)
                 .populate('userId departmentId')
-                .select('-userId.password -userId.image.publicId')
+                .select('-userId.password -userId.image.publicId');
 
             return res.status(200).json(
                 new ApiResponse(200, populatedDoctor, 'doctor updated successfully')
-            )
+            );
         } catch (err) {
-            await session.abortTransaction()
-            session.endSession()
-            throw new ApiErrors(500, 'Doctor update failed')
+            await session.abortTransaction();
+            session.endSession();
+            throw new ApiErrors(500, 'Doctor update failed');
         }
     })
-]
+];
 
 export const deleteDoctor = AsyncHandler(async (req, res) => {
     const { doctorId } = req.params

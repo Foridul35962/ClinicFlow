@@ -164,10 +164,14 @@ export const deleteDoctor = createAsyncThunk(
 
 interface initialStateType {
     adminLoading: boolean
+    getDoctorLoading: boolean
+    allDoctor: any
 }
 
 const initialState: initialStateType = {
-    adminLoading: false
+    adminLoading: false,
+    getDoctorLoading: false,
+    allDoctor: null
 }
 
 const adminSlice = createSlice({
@@ -213,6 +217,18 @@ const adminSlice = createSlice({
             })
             .addCase(deleteDepartment.rejected, (state) => {
                 state.adminLoading = false
+            })
+        //get all doctors
+        builder
+            .addCase(getAllDoctors.pending, (state)=>{
+                state.getDoctorLoading = true
+            })
+            .addCase(getAllDoctors.fulfilled, (state, action)=>{
+                state.getDoctorLoading = false
+                state.allDoctor = action.payload.data
+            })
+            .addCase(getAllDoctors.rejected, (state)=>{
+                state.getDoctorLoading = false
             })
     }
 })
