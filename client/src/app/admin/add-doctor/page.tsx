@@ -1,17 +1,36 @@
 "use client"
 
-import React, { useState, useRef } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import { useForm, useFieldArray } from 'react-hook-form'
 import { Plus, Trash2, Upload, User, Mail, Lock, Phone, Building, Clock, CreditCard, ArrowLeft } from 'lucide-react'
 import { toast } from 'react-toastify'
 import Link from 'next/link'
+import { useDispatch, useSelector } from 'react-redux'
+import { AppDispatch, RootState } from '@/store/store'
+import { addDoctor, getDepartments } from '@/store/slice/adminSlice'
+import { useRouter } from 'next/navigation'
 
 const AddDoctorPage = () => {
   const [loading, setLoading] = useState(false)
   const [imagePreview, setImagePreview] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const { departments } = useSelector((state: RootState) => state.admin)
+  const dispatch = useDispatch<AppDispatch>()
+  const router = useRouter()
 
-  // React Hook Form Initialization
+  useEffect(() => {
+    const fetchDepartment = async () => {
+      try {
+        await dispatch(getDepartments(null)).unwrap()
+      } catch (error: any) {
+        toast.error(error.message)
+      }
+    }
+    if (departments.length===0) {
+      fetchDepartment()
+    }
+  }, [])
+
   const { register, control, handleSubmit, watch, setValue, formState: { errors } } = useForm({
     defaultValues: {
       fullName: '',
@@ -47,7 +66,7 @@ const AddDoctorPage = () => {
     setLoading(true)
     try {
       const data = new FormData()
-      
+
       // Append Simple Fields
       Object.keys(formData).forEach(key => {
         if (key !== 'schedule' && key !== 'image') {
@@ -63,10 +82,10 @@ const AddDoctorPage = () => {
       // Append Schedule (Stringified)
       data.append('schedule', JSON.stringify(formData.schedule))
 
-      // API Call Placeholder
-      console.log("FormData ready to send!")
+      await dispatch(addDoctor(data)).unwrap()
       toast.success("Doctor registered successfully!")
-      
+      router.push('/admin/doctors')
+
     } catch (error: any) {
       toast.error(error.message || "Failed to add doctor")
     } finally {
@@ -89,12 +108,12 @@ const AddDoctorPage = () => {
         </div>
 
         <form onSubmit={handleSubmit(onSubmit)} className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          
+
           {/* Left Column: Image & Fee */}
           <div className="lg:col-span-1 space-y-6">
             <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
               <label className="block text-sm font-bold text-slate-700 mb-4 uppercase text-center">Profile Photo</label>
-              <div 
+              <div
                 onClick={() => fileInputRef.current?.click()}
                 className={`w-full aspect-square rounded-2xl border-2 border-dashed flex flex-col items-center justify-center overflow-hidden cursor-pointer transition-all ${errors.image ? 'border-red-400 bg-red-50' : 'border-slate-200 bg-slate-50 hover:border-blue-400'}`}
               >
@@ -113,29 +132,29 @@ const AddDoctorPage = () => {
 
             <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-4">
               <h3 className="font-bold text-slate-800 border-b pb-2 mb-4">Practice Details</h3>
-              
-              <FormInput 
-                label="Consultation Fee (BDT)" 
-                placeholder="500" 
+
+              <FormInput
+                label="Consultation Fee (BDT)"
+                placeholder="500"
                 type="number"
-                icon={<CreditCard size={16}/>}
+                icon={<CreditCard size={16} />}
                 error={errors.consultationFee?.message}
                 registration={register("consultationFee", { required: "Fee is required", min: { value: 0, message: "Fee must be positive" } })}
               />
 
-              <FormInput 
-                label="Chamber Number" 
-                placeholder="A-101" 
-                icon={<Building size={16}/>}
+              <FormInput
+                label="Chamber Number"
+                placeholder="A-101"
+                icon={<Building size={16} />}
                 error={errors.chamberNumber?.message}
                 registration={register("chamberNumber", { required: "Chamber is required" })}
               />
 
-              <FormInput 
-                label="Slot Duration (Min)" 
+              <FormInput
+                label="Slot Duration (Min)"
                 type="number"
-                placeholder="15" 
-                icon={<Clock size={16}/>}
+                placeholder="15"
+                icon={<Clock size={16} />}
                 error={errors.slotDuration?.message}
                 registration={register("slotDuration", { required: "Duration is required", min: { value: 1, message: "Min 1 min" } })}
               />
@@ -148,45 +167,45 @@ const AddDoctorPage = () => {
               <h3 className="font-bold text-slate-800 border-b pb-3 mb-6 flex items-center gap-2">
                 <User size={18} className="text-blue-600" /> Basic Information
               </h3>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <FormInput 
-                  label="Full Name" 
-                  placeholder="Dr. Foridul Islam" 
-                  icon={<User size={16}/>}
+                <FormInput
+                  label="Full Name"
+                  placeholder="Dr. Foridul Islam"
+                  icon={<User size={16} />}
                   error={errors.fullName?.message}
                   registration={register("fullName", { required: "FullName is required" })}
                 />
 
-                <FormInput 
-                  label="Email Address" 
-                  placeholder="doctor@gmail.com" 
-                  icon={<Mail size={16}/>}
+                <FormInput
+                  label="Email Address"
+                  placeholder="doctor@gmail.com"
+                  icon={<Mail size={16} />}
                   error={errors.email?.message}
-                  registration={register("email", { 
+                  registration={register("email", {
                     required: "Email is required",
                     pattern: { value: /^\S+@\S+$/i, message: "Invalid email address" }
                   })}
                 />
 
-                <FormInput 
-                  label="Phone Number" 
-                  placeholder="017XXXXXXXX" 
-                  icon={<Phone size={16}/>}
+                <FormInput
+                  label="Phone Number"
+                  placeholder="017XXXXXXXX"
+                  icon={<Phone size={16} />}
                   error={errors.phoneNumber?.message}
-                  registration={register("phoneNumber", { 
+                  registration={register("phoneNumber", {
                     required: "Phone is required",
                     pattern: { value: /^(?:\+88|88)?(01[3-9]\d{8})$/, message: "Invalid BD number" }
                   })}
                 />
 
-                <FormInput 
-                  label="Password" 
+                <FormInput
+                  label="Password"
                   type="password"
-                  placeholder="Min 8 chars, 1 letter, 1 number" 
-                  icon={<Lock size={16}/>}
+                  placeholder="Min 8 chars, 1 letter, 1 number"
+                  icon={<Lock size={16} />}
                   error={errors.password?.message}
-                  registration={register("password", { 
+                  registration={register("password", {
                     required: "Password is required",
                     minLength: { value: 8, message: "Min 8 characters" },
                     validate: {
@@ -198,13 +217,19 @@ const AddDoctorPage = () => {
 
                 <div className="flex flex-col gap-2">
                   <label className="text-sm font-bold text-slate-700 uppercase tracking-tight">Department</label>
-                  <select 
+                  <select
                     {...register("departmentId", { required: "Select a department" })}
                     className="w-full p-2.5 border border-slate-200 rounded-xl bg-slate-50 text-black focus:ring-2 focus:ring-blue-500 outline-none text-sm font-medium"
                   >
                     <option value="">Choose Department</option>
-                    <option value="69c28f03a9dfe643f8776548">Cardiology</option>
-                    <option value="69c28f03a9dfe643f8776549">Neurology</option>
+                    {
+                      departments &&
+                      departments.map((department: any) => (
+                        <option key={department._id} value={department._id}>
+                          {department.name.charAt(0).toUpperCase() + department.name.slice(1)}
+                        </option>
+                      ))
+                    }
                   </select>
                   {errors.departmentId && <p className="text-red-500 text-[10px] font-bold uppercase">{errors.departmentId.message}</p>}
                 </div>
@@ -217,8 +242,8 @@ const AddDoctorPage = () => {
                 <h3 className="font-bold text-slate-800 flex items-center gap-2">
                   <Clock size={18} className="text-blue-600" /> Availability Schedule
                 </h3>
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   onClick={() => append({ dayOfWeek: 'Sun', startTime: '09:00', endTime: '12:00' })}
                   className="text-xs bg-blue-600 text-white px-4 py-2 rounded-lg font-bold hover:bg-blue-700 transition-all"
                 >
@@ -231,7 +256,7 @@ const AddDoctorPage = () => {
                   <div key={field.id} className="flex flex-wrap items-end gap-4 p-4 bg-slate-50 rounded-xl border border-slate-100 relative group">
                     <div className="flex-1 min-w-30">
                       <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Day</label>
-                      <select 
+                      <select
                         {...register(`schedule.${index}.dayOfWeek` as const, { required: true })}
                         className="w-full p-2 border border-slate-200 rounded-lg text-black bg-white text-sm outline-none focus:ring-2 focus:ring-blue-500"
                       >
@@ -243,8 +268,8 @@ const AddDoctorPage = () => {
 
                     <div className="flex-1 min-w-30">
                       <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">Start</label>
-                      <input 
-                        type="time" 
+                      <input
+                        type="time"
                         {...register(`schedule.${index}.startTime` as const, { required: true })}
                         className="w-full p-2 border border-slate-200 rounded-lg text-black bg-white text-sm outline-none focus:ring-2 focus:ring-blue-500"
                       />
@@ -252,9 +277,9 @@ const AddDoctorPage = () => {
 
                     <div className="flex-1 min-w-30">
                       <label className="text-[10px] font-bold text-slate-400 uppercase mb-1 block">End</label>
-                      <input 
-                        type="time" 
-                        {...register(`schedule.${index}.endTime` as const, { 
+                      <input
+                        type="time"
+                        {...register(`schedule.${index}.endTime` as const, {
                           required: true,
                           validate: (val, formValues) => {
                             const start = formValues.schedule[index].startTime;
@@ -287,8 +312,8 @@ const AddDoctorPage = () => {
               <Link href="/admin/doctors" className="px-8 py-3 rounded-xl font-bold text-slate-500 bg-white border border-slate-200 hover:bg-slate-50 transition-all">
                 Cancel
               </Link>
-              <button 
-                type="submit" 
+              <button
+                type="submit"
                 disabled={loading}
                 className={`px-12 py-3 rounded-xl font-bold text-white shadow-lg transition-all ${loading ? 'bg-slate-400' : 'bg-blue-600 hover:bg-blue-700 shadow-blue-200'}`}
               >
@@ -310,8 +335,8 @@ const FormInput = ({ label, icon, error, registration, ...props }: any) => (
       <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
         {icon}
       </div>
-      <input 
-        {...props} 
+      <input
+        {...props}
         {...registration}
         className={`block w-full pl-10 pr-4 py-2.5 border ${error ? 'border-red-400 ring-1 ring-red-100' : 'border-slate-200'} rounded-xl bg-slate-50 text-black focus:ring-2 focus:ring-blue-500 focus:bg-white outline-none text-sm font-medium transition-all shadow-sm`}
       />

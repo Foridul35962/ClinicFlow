@@ -539,7 +539,6 @@ export const addDoctor = [
         } catch (err) {
             await session.abortTransaction()
             session.endSession()
-            console.log(err)
             throw new ApiErrors(500, 'Doctor creation failed')
         }
     })

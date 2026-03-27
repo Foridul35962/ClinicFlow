@@ -102,6 +102,19 @@ export const deleteDepartment = createAsyncThunk(
     }
 )
 
+export const getDepartments = createAsyncThunk(
+    "admin/getDepartment",
+    async(_:null, {rejectWithValue})=>{
+        try {
+            const res = await axios.get(`${process.env.NEXT_PUBLIC_SERVER_URL}/api/user/allDepartment`)
+            return res.data
+        } catch (error) {
+            const err = error as AxiosError<any>
+            return rejectWithValue(err?.response?.data || "Something went wrong")
+        }
+    }
+)
+
 export const getAllDoctors = createAsyncThunk(
     "admin/allDoctors",
     async (_: null, { rejectWithValue }) => {
@@ -119,7 +132,7 @@ export const getAllDoctors = createAsyncThunk(
 
 export const addDoctor = createAsyncThunk(
     "admin/addDoctor",
-    async (data: addDoctorType, { rejectWithValue }) => {
+    async (data: FormData, { rejectWithValue }) => {
         try {
             const res = await axios.post(`${SERVER_URL}/add-doctor`, data,
                 { withCredentials: true }
@@ -166,12 +179,14 @@ interface initialStateType {
     adminLoading: boolean
     getDoctorLoading: boolean
     allDoctor: any
+    departments: any
 }
 
 const initialState: initialStateType = {
     adminLoading: false,
     getDoctorLoading: false,
-    allDoctor: null
+    allDoctor: [],
+    departments: []
 }
 
 const adminSlice = createSlice({
@@ -190,8 +205,9 @@ const adminSlice = createSlice({
             .addCase(addDepartment.pending, (state) => {
                 state.adminLoading = true
             })
-            .addCase(addDepartment.fulfilled, (state) => {
+            .addCase(addDepartment.fulfilled, (state, action) => {
                 state.adminLoading = false
+                state.departments = [...state.departments, action.payload.data]
             })
             .addCase(addDepartment.rejected, (state) => {
                 state.adminLoading = false
@@ -201,8 +217,11 @@ const adminSlice = createSlice({
             .addCase(editDepartment.pending, (state) => {
                 state.adminLoading = true
             })
-            .addCase(editDepartment.fulfilled, (state) => {
+            .addCase(editDepartment.fulfilled, (state, action) => {
                 state.adminLoading = false
+                const departmentId = action.payload.data._id
+                const idx = state.departments.findIndex((department:any)=>department._id === departmentId)
+                state.departments[idx] = action.payload.data
             })
             .addCase(editDepartment.rejected, (state) => {
                 state.adminLoading = false
@@ -212,11 +231,18 @@ const adminSlice = createSlice({
             .addCase(deleteDepartment.pending, (state) => {
                 state.adminLoading = true
             })
-            .addCase(deleteDepartment.fulfilled, (state) => {
+            .addCase(deleteDepartment.fulfilled, (state, action) => {
                 state.adminLoading = false
+                const departmentId = action.payload.data
+                state.departments = state.departments.filter((department:any)=>department._id !== departmentId)
             })
             .addCase(deleteDepartment.rejected, (state) => {
                 state.adminLoading = false
+            })
+        //get department
+        builder
+            .addCase(getDepartments.fulfilled, (state, action)=>{
+                state.departments = action.payload.data
             })
         //get all doctors
         builder
@@ -229,6 +255,18 @@ const adminSlice = createSlice({
             })
             .addCase(getAllDoctors.rejected, (state)=>{
                 state.getDoctorLoading = false
+            })
+        //add doctor
+        builder
+            .addCase(addDoctor.pending, (state)=>{
+                state.adminLoading=true
+            })
+            .addCase(addDoctor.fulfilled, (state, action)=>{
+                state.adminLoading=false
+                state.allDoctor = [...state.allDoctor, action.payload.data]
+            })
+            .addCase(addDoctor.rejected, (state)=>{
+                state.adminLoading=false
             })
     }
 })
