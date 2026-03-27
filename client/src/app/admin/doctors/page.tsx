@@ -22,7 +22,7 @@ const DoctorsPage = () => {
         toast.error(error.message || "Something went wrong")
       }
     }
-    if (!allDoctor) {
+    if (allDoctor.length===0) {
       fetchData()
     }
   }, [dispatch])
