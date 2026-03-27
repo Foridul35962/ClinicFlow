@@ -334,7 +334,7 @@ export const getDoctors = AsyncHandler(async (req, res) => {
                 select: '-password -image.publicId'
             })
             .populate({
-                path:'departmentId',
+                path: 'departmentId',
                 select: '-chamberNumber -consultationFee -slotDuration'
             })
             .lean()
@@ -532,6 +532,9 @@ export const addDoctor = [
                 .populate('userId departmentId')
                 .select('-userId.password -userId.image.publicId')
 
+            const doctorKey = 'doctors:all'
+            await redis.del(doctorKey)
+
             return res.status(201).json(
                 new ApiResponse(201, populatedDoctor, 'doctor added successfully')
             )
@@ -716,6 +719,12 @@ export const editDoctor = [
                 .populate('userId departmentId')
                 .select('-userId.password -userId.image.publicId');
 
+            const doctorKey = 'doctors:all'
+            await redis.del(doctorKey)
+
+            const redisKey = `Doctor:${doctorId}`
+            await redis.del(redisKey)
+
             return res.status(200).json(
                 new ApiResponse(200, populatedDoctor, 'doctor updated successfully')
             );
@@ -747,7 +756,7 @@ export const deleteDoctor = AsyncHandler(async (req, res) => {
 
         await Doctors.findByIdAndDelete(doctorId, { session })
 
-        // 🔹 Delete user
+        // Delete user
         await Users.findByIdAndDelete(doctor.userId, { session })
 
         await session.commitTransaction()
@@ -760,6 +769,12 @@ export const deleteDoctor = AsyncHandler(async (req, res) => {
                 console.log('image delete failed:', err)
             }
         }
+
+        const doctorKey = 'doctors:all'
+        await redis.del(doctorKey)
+
+        const redisKey = `Doctor:${doctorId}`
+        await redis.del(redisKey)
 
         return res.status(200).json(
             new ApiResponse(200, doctorId, 'doctor deleted successfully')

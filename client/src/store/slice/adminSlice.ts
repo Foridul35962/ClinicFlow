@@ -147,7 +147,7 @@ export const addDoctor = createAsyncThunk(
 
 export const editDoctor = createAsyncThunk(
     "admin/editDoctor",
-    async ({ data, doctorId }: { data: editDoctorType, doctorId: string }, { rejectWithValue }) => {
+    async ({ data, doctorId }: { data: FormData, doctorId: string }, { rejectWithValue }) => {
         try {
             const res = await axios.patch(`${SERVER_URL}/edit-doctor/${doctorId}`, data,
                 { withCredentials: true }
@@ -280,6 +280,15 @@ const adminSlice = createSlice({
             })
             .addCase(deleteDoctor.rejected, (state)=>{
                 state.adminLoading = false
+            })
+        //edit doctor
+        builder
+            .addCase(editDoctor.fulfilled, (state, action)=>{
+                const doctorId = action.payload.data._id
+                const idx = state.allDoctor.findIndex((doctor:any)=>doctor._id === doctorId)
+                if (idx>-1) {
+                    state.allDoctor[0] = action.payload.data
+                }
             })
     }
 })
