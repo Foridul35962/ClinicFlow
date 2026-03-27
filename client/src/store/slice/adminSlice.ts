@@ -268,6 +268,19 @@ const adminSlice = createSlice({
             .addCase(addDoctor.rejected, (state)=>{
                 state.adminLoading=false
             })
+        //delete doctor
+        builder
+            .addCase(deleteDoctor.pending, (state)=>{
+                state.adminLoading = true
+            })
+            .addCase(deleteDoctor.fulfilled, (state, action)=>{
+                state.adminLoading = false
+                const doctorId = action.payload.data
+                state.allDoctor = state.allDoctor.filter((doctor:any)=>doctor._id !== doctorId)
+            })
+            .addCase(deleteDoctor.rejected, (state)=>{
+                state.adminLoading = false
+            })
     }
 })
 
