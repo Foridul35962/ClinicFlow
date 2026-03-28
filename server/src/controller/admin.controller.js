@@ -89,6 +89,8 @@ export const addReceptionist = [
 
         user.password = undefined
         user.image.publicId = undefined
+        const redisKey = 'receptionist:all'
+        await redis.del(redisKey)
 
         return res
             .status(201)
@@ -117,6 +119,8 @@ export const deleteReceptionist = AsyncHandler(async (req, res) => {
     }
 
     await receptionist.deleteOne()
+    const redisKey = 'receptionist:all'
+    await redis.del(redisKey)
 
     return res
         .status(200)
@@ -198,11 +202,40 @@ export const editReceptionist = [
             receptionist.image.publicId = undefined;
         }
 
+        const redisKey = 'receptionist:all'
+        await redis.del(redisKey)
+
         return res.status(200).json(
             new ApiResponse(200, receptionist, "receptionist updated successfully")
         );
     })
 ]
+
+export const getAllReceptionist = AsyncHandler(async (req, res) => {
+    const redisKey = 'receptionist:all'
+
+    const redisAllReceptionist = await redis.get(redisKey)
+    let allReceptionist
+
+    if (redisAllReceptionist) {
+        allReceptionist = JSON.parse(redisAllReceptionist)
+    } else {
+        allReceptionist = await Users.find({ role: "receptionist" })
+            .select('-password -image.publicId')
+            .lean()
+
+        await redis.set(redisKey,
+            JSON.stringify(allReceptionist),
+            "EX", 600
+        )
+    }
+
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(200, allReceptionist, 'all receptionist get successful')
+        )
+})
 
 export const addDepartment = [
     check('name')
