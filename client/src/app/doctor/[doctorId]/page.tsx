@@ -9,7 +9,8 @@ import { toast } from 'react-toastify'
 import {
   Edit3, Trash2, Calendar, MapPin,
   CircleDollarSign, Clock, ArrowLeft,
-  Stethoscope, ShieldCheck, Star
+  Stethoscope, ShieldCheck, Star,
+  ArrowRight
 } from 'lucide-react'
 import Link from 'next/link'
 import { deleteDoctor } from '@/store/slice/adminSlice'
@@ -37,6 +38,14 @@ const DoctorProfilePage = () => {
       } catch (error: any) {
         toast.error(error.message)
       }
+    }
+  }
+
+  const handleAppointmentClick = (doctorId: string) => {
+    if (!user) {
+      router.push('/login')
+    } else {
+      router.push(`/appointment/${doctorId}`)
     }
   }
 
@@ -76,6 +85,16 @@ const DoctorProfilePage = () => {
             </>
           )}
         </div>
+        {/* Booking Button */}
+          {(!user || user.role === 'patient') && (
+            <button
+              onClick={() => handleAppointmentClick(doctor._id)}
+              className="flex items-center justify-center gap-2 bg-blue-600 text-white font-semibold py-3 px-2 cursor-pointer rounded-xl hover:bg-blue-700 active:scale-95 transition-all shadow-lg shadow-blue-100"
+            >
+              Book Appointment
+              <ArrowRight size={18} />
+            </button>
+          )}
       </div>
 
       <div className="w-full px-4 py-8 md:px-10 lg:px-16">

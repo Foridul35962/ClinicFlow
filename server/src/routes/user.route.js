@@ -5,5 +5,6 @@ const userRouter = express.Router()
 
 userRouter.get('/allDepartment', userController.fetchAllDepartment)
 userRouter.get('/doctor/:doctorId', userController.getDoctor)
+userRouter.get('/departmentDoctor/:departmentId', userController.departmentDoctors)
 
 export default userRouter

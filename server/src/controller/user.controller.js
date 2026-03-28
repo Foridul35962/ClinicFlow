@@ -66,3 +66,37 @@ export const getDoctor = AsyncHandler(async (req, res) => {
             new ApiResponse(200, doctor, 'doctor fetch successfully')
         )
 })
+
+export const departmentDoctors = AsyncHandler(async(req, res)=>{
+    const {departmentId} = req.params
+    if (!departmentId) {
+        throw new ApiErrors(400, 'departmentId is required')
+    }
+
+    const departmentDoctorKey = `departmentDoctors:${departmentId}`
+
+    const redisDepartmentDoctor = await redis.get(departmentDoctorKey)
+
+    let doctors
+    if (redisDepartmentDoctor) {
+        doctors = JSON.parse(redisDepartmentDoctor)
+    } else{
+        doctors = await Doctors.find({departmentId})
+            .populate({
+                path:'userId',
+                select: '-password -image.publicId'
+            })
+            .lean()
+            
+        await redis.set(departmentDoctorKey, 
+            JSON.stringify(doctors),
+            "Ex", 600
+        )
+    }
+
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(200, doctors, 'department doctor fetch successfull')
+        )
+})
