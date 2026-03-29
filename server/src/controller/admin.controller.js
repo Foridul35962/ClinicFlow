@@ -65,7 +65,7 @@ export const addReceptionist = [
 
         let upload
         try {
-            const uploaded = await uploadToCloudinary(image, 'ClinicFlow')
+            const uploaded = await uploadToCloudinary(image.buffer, 'ClinicFlow')
             upload = {
                 url: uploaded.secure_url,
                 publicId: uploaded.public_id
@@ -180,7 +180,7 @@ export const editReceptionist = [
 
         if (image) {
             try {
-                const uploaded = await uploadToCloudinary(image, "ClinicFlow");
+                const uploaded = await uploadToCloudinary(image.buffer, "ClinicFlow");
 
                 if (receptionist.image?.publicId) {
                     await cloudinary.uploader.destroy(receptionist.image.publicId);

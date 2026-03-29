@@ -1,10 +1,6 @@
 import {
     addDepartmentType,
-    addDoctorType,
-    addReceptionistType,
     editDepartmentType,
-    editDoctorType,
-    editReceptionistType
 } from "@/types/member";
 
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
@@ -14,7 +10,7 @@ const SERVER_URL = `${process.env.NEXT_PUBLIC_SERVER_URL}/api/admin`
 
 export const addReceptionist = createAsyncThunk(
     "admin/addreceptionist",
-    async (data: addReceptionistType, { rejectWithValue }) => {
+    async (data: FormData, { rejectWithValue }) => {
         try {
             const res = await axios.post(`${SERVER_URL}/add-receptionist`, data,
                 { withCredentials: true }
@@ -29,7 +25,7 @@ export const addReceptionist = createAsyncThunk(
 
 export const editReceptionist = createAsyncThunk(
     "admin/editreceptionist",
-    async ({ data, receptionistId }: { data: editReceptionistType, receptionistId: string }, { rejectWithValue }) => {
+    async ({ data, receptionistId }: { data: FormData, receptionistId: string }, { rejectWithValue }) => {
         try {
             const res = await axios.patch(`${SERVER_URL}/edit-receptionist/${receptionistId}`, data,
                 { withCredentials: true }
@@ -47,6 +43,21 @@ export const deleteReceptionist = createAsyncThunk(
     async (receptionistId: string, { rejectWithValue }) => {
         try {
             const res = await axios.delete(`${SERVER_URL}/delete-receptionist/${receptionistId}`,
+                { withCredentials: true }
+            )
+            return res.data
+        } catch (error) {
+            const err = error as AxiosError<any>
+            return rejectWithValue(err?.response?.data || "Something went wrong")
+        }
+    }
+)
+
+export const getAllReceptionist = createAsyncThunk(
+    "admin/getAllReceptionist",
+    async (_: null, { rejectWithValue }) => {
+        try {
+            const res = await axios.get(`${SERVER_URL}/all-receptionist`,
                 { withCredentials: true }
             )
             return res.data
@@ -104,7 +115,7 @@ export const deleteDepartment = createAsyncThunk(
 
 export const getDepartments = createAsyncThunk(
     "admin/getDepartment",
-    async(_:null, {rejectWithValue})=>{
+    async (_: null, { rejectWithValue }) => {
         try {
             const res = await axios.get(`${process.env.NEXT_PUBLIC_SERVER_URL}/api/user/allDepartment`)
             return res.data
@@ -180,13 +191,17 @@ interface initialStateType {
     getDoctorLoading: boolean
     allDoctor: any
     departments: any
+    receptionist: any
+    receptionistFetch: boolean
 }
 
 const initialState: initialStateType = {
     adminLoading: false,
     getDoctorLoading: false,
     allDoctor: [],
-    departments: []
+    departments: [],
+    receptionist: [],
+    receptionistFetch: false
 }
 
 const adminSlice = createSlice({
@@ -195,10 +210,58 @@ const adminSlice = createSlice({
     reducers: {},
     extraReducers: (builder) => {
         //add receptionist
-        // builder
-        //     .addCase(addreceptionist.pending, (state)=>{
-        //         state.adminLoading = true
-        //     })
+        builder
+            .addCase(addReceptionist.pending, (state) => {
+                state.adminLoading = true
+            })
+            .addCase(addReceptionist.fulfilled, (state, action) => {
+                state.adminLoading = false
+                state.receptionist = [...state.receptionist, action.payload.data]
+            })
+            .addCase(addReceptionist.rejected, (state) => {
+                state.adminLoading = false
+            })
+        //edit receptionist
+        builder
+            .addCase(editReceptionist.pending, (state) => {
+                state.adminLoading = true
+            })
+            .addCase(editReceptionist.fulfilled, (state, action) => {
+                state.adminLoading = false
+                const receptionist = action.payload.data
+                const idx = state.receptionist.findIndex((reception: any) => reception._id === receptionist._id)
+                if (idx > -1) {
+                    state.receptionist[idx] = receptionist
+                }
+            })
+            .addCase(editReceptionist.rejected, (state) => {
+                state.adminLoading = false
+            })
+        // delete receptionist
+        builder
+            .addCase(deleteReceptionist.pending, (state) => {
+                state.adminLoading = true
+            })
+            .addCase(deleteReceptionist.fulfilled, (state, action) => {
+                state.adminLoading = false
+                const receptionistId = action.payload.data
+                state.receptionist = state.receptionist.filter((r: any) => r._id !== receptionistId)
+            })
+            .addCase(deleteReceptionist.rejected, (state) => {
+                state.adminLoading = false
+            })
+        // get add receptionist
+        builder
+            .addCase(getAllReceptionist.pending, (state) => {
+                state.receptionistFetch = true
+            })
+            .addCase(getAllReceptionist.fulfilled, (state, action) => {
+                state.receptionistFetch = false
+                state.receptionist = action.payload.data
+            })
+            .addCase(getAllReceptionist.rejected, (state) => {
+                state.receptionistFetch = false
+            })
 
         //add department
         builder
@@ -220,7 +283,7 @@ const adminSlice = createSlice({
             .addCase(editDepartment.fulfilled, (state, action) => {
                 state.adminLoading = false
                 const departmentId = action.payload.data._id
-                const idx = state.departments.findIndex((department:any)=>department._id === departmentId)
+                const idx = state.departments.findIndex((department: any) => department._id === departmentId)
                 state.departments[idx] = action.payload.data
             })
             .addCase(editDepartment.rejected, (state) => {
@@ -234,59 +297,59 @@ const adminSlice = createSlice({
             .addCase(deleteDepartment.fulfilled, (state, action) => {
                 state.adminLoading = false
                 const departmentId = action.payload.data
-                state.departments = state.departments.filter((department:any)=>department._id !== departmentId)
+                state.departments = state.departments.filter((department: any) => department._id !== departmentId)
             })
             .addCase(deleteDepartment.rejected, (state) => {
                 state.adminLoading = false
             })
         //get department
         builder
-            .addCase(getDepartments.fulfilled, (state, action)=>{
+            .addCase(getDepartments.fulfilled, (state, action) => {
                 state.departments = action.payload.data
             })
         //get all doctors
         builder
-            .addCase(getAllDoctors.pending, (state)=>{
+            .addCase(getAllDoctors.pending, (state) => {
                 state.getDoctorLoading = true
             })
-            .addCase(getAllDoctors.fulfilled, (state, action)=>{
+            .addCase(getAllDoctors.fulfilled, (state, action) => {
                 state.getDoctorLoading = false
                 state.allDoctor = action.payload.data
             })
-            .addCase(getAllDoctors.rejected, (state)=>{
+            .addCase(getAllDoctors.rejected, (state) => {
                 state.getDoctorLoading = false
             })
         //add doctor
         builder
-            .addCase(addDoctor.pending, (state)=>{
-                state.adminLoading=true
+            .addCase(addDoctor.pending, (state) => {
+                state.adminLoading = true
             })
-            .addCase(addDoctor.fulfilled, (state, action)=>{
-                state.adminLoading=false
+            .addCase(addDoctor.fulfilled, (state, action) => {
+                state.adminLoading = false
                 state.allDoctor = [...state.allDoctor, action.payload.data]
             })
-            .addCase(addDoctor.rejected, (state)=>{
-                state.adminLoading=false
+            .addCase(addDoctor.rejected, (state) => {
+                state.adminLoading = false
             })
         //delete doctor
         builder
-            .addCase(deleteDoctor.pending, (state)=>{
+            .addCase(deleteDoctor.pending, (state) => {
                 state.adminLoading = true
             })
-            .addCase(deleteDoctor.fulfilled, (state, action)=>{
+            .addCase(deleteDoctor.fulfilled, (state, action) => {
                 state.adminLoading = false
                 const doctorId = action.payload.data
-                state.allDoctor = state.allDoctor.filter((doctor:any)=>doctor._id !== doctorId)
+                state.allDoctor = state.allDoctor.filter((doctor: any) => doctor._id !== doctorId)
             })
-            .addCase(deleteDoctor.rejected, (state)=>{
+            .addCase(deleteDoctor.rejected, (state) => {
                 state.adminLoading = false
             })
         //edit doctor
         builder
-            .addCase(editDoctor.fulfilled, (state, action)=>{
+            .addCase(editDoctor.fulfilled, (state, action) => {
                 const doctorId = action.payload.data._id
-                const idx = state.allDoctor.findIndex((doctor:any)=>doctor._id === doctorId)
-                if (idx>-1) {
+                const idx = state.allDoctor.findIndex((doctor: any) => doctor._id === doctorId)
+                if (idx > -1) {
                     state.allDoctor[0] = action.payload.data
                 }
             })
