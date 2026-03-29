@@ -6,15 +6,30 @@ import {
   ChevronDown, LayoutDashboard
 } from 'lucide-react';
 import Link from 'next/link';
-import { useSelector } from 'react-redux';
-import { RootState } from '@/store/store';
+import { useDispatch, useSelector } from 'react-redux';
+import { AppDispatch, RootState } from '@/store/store';
+import { logout } from '@/store/slice/authSlice';
+import { toast } from 'react-toastify';
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isOpenMenu, setIsOpenMenu] = useState(false);
   const { user } = useSelector((state: RootState) => state.auth);
+  const dispatch = useDispatch<AppDispatch>()
 
   const toggleMenu = () => setIsOpen(!isOpen);
+
+  const handleLogOut = async () => {
+    if (window.confirm('Are you want to logged out?')) {
+      try {
+        await dispatch(logout(null)).unwrap()
+        toast.success('Logout Successfully')
+        setIsOpenMenu(false)
+      } catch (error: any) {
+        toast.error(error.message)
+      }
+    }
+  }
 
   return (
     <nav className="sticky top-0 z-50 w-full bg-blue-50/80 backdrop-blur-md border-b border-blue-100/50">
@@ -79,7 +94,7 @@ const Navbar = () => {
                   Add Doctor
                   <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-blue-600 transition-all duration-300 group-hover:w-full"></span>
                 </Link>
-                
+
                 <Link
                   href={'admin/receptionist'}
                   className="text-sm font-bold text-slate-600 hover:text-blue-600 transition-colors relative group"
@@ -141,7 +156,7 @@ const Navbar = () => {
                           <LayoutDashboard size={18} /> Dashboard
                         </Link>
                         <div className="my-1 border-t border-slate-50"></div>
-                        <button className="w-full flex items-center gap-3 px-3 py-2.5 text-red-500 hover:bg-red-50 rounded-xl transition-all font-bold text-sm group">
+                        <button onClick={handleLogOut} className="w-full cursor-pointer flex items-center gap-3 px-3 py-2.5 text-red-500 hover:bg-red-50 rounded-xl transition-all font-bold text-sm group">
                           <LogOut size={18} /> Logout
                         </button>
                       </div>
@@ -171,13 +186,13 @@ const Navbar = () => {
 
             {(!user || user.role !== 'admin') && (
               <>
-            <Link href="/departments" onClick={() => setIsOpen(false)} className="text-lg font-bold text-slate-700 flex items-center justify-between border-b border-slate-50 pb-2">
-              Departments <ChevronRight size={18} />
-            </Link>
-              
-              <Link href="/works" onClick={() => setIsOpen(false)} className="text-lg font-bold text-slate-700 flex items-center justify-between border-b border-slate-50 pb-2">
-                How To Work <ChevronRight size={18} />
-              </Link>
+                <Link href="/departments" onClick={() => setIsOpen(false)} className="text-lg font-bold text-slate-700 flex items-center justify-between border-b border-slate-50 pb-2">
+                  Departments <ChevronRight size={18} />
+                </Link>
+
+                <Link href="/works" onClick={() => setIsOpen(false)} className="text-lg font-bold text-slate-700 flex items-center justify-between border-b border-slate-50 pb-2">
+                  How To Work <ChevronRight size={18} />
+                </Link>
               </>
             )}
 
@@ -217,7 +232,7 @@ const Navbar = () => {
                 <Link href={`/${user.role}/dashboard`} onClick={() => setIsOpen(false)} className="block w-full py-3.5 text-center font-bold text-slate-700 border-2 border-blue-100 rounded-xl">
                   Dashboard
                 </Link>
-                <button className="w-full py-3.5 flex items-center justify-center gap-2 font-bold text-red-500 bg-red-50 rounded-xl">
+                <button onClick={handleLogOut} className="w-full cursor-pointer py-3.5 flex items-center justify-center gap-2 font-bold text-red-500 bg-red-50 rounded-xl">
                   <LogOut size={20} /> Logout Account
                 </button>
               </div>
