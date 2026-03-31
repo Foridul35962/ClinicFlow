@@ -5,6 +5,7 @@ import errorHandler from './helpers/ErrorHandler.js'
 import authRouter from './routes/auth.route.js'
 import adminRouter from './routes/admin.route.js'
 import userRouter from './routes/user.route.js'
+import patientRouter from './routes/patient.route.js'
 
 const app = express()
 
@@ -21,6 +22,7 @@ app.use(express.urlencoded({ extended: true }))
 app.use('/api/auth', authRouter)
 app.use('/api/admin', adminRouter)
 app.use('/api/user', userRouter)
+app.use('/api/patient', patientRouter)
 
 app.get('/', (req, res) => {
     res.send("ClinicFlow server is running ...")

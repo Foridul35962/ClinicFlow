@@ -10,10 +10,14 @@ import {
   Edit3, Trash2, Calendar, MapPin,
   CircleDollarSign, Clock, ArrowLeft,
   Stethoscope, ShieldCheck, Star,
-  ArrowRight
+  ArrowRight,
+  Loader2
 } from 'lucide-react'
 import Link from 'next/link'
 import { deleteDoctor } from '@/store/slice/adminSlice'
+import AppointmentValuePage from '@/components/patient/AppointmentValuePage'
+import DoctorNotFound from '@/components/not-found/DoctorNotFound'
+import { appointment } from '@/store/slice/patientSlice'
 
 const DoctorProfilePage = () => {
   const { doctorId } = useParams()
@@ -22,6 +26,7 @@ const DoctorProfilePage = () => {
 
   const { doctor, userLoading } = useSelector((state: RootState) => state.user)
   const { user } = useSelector((state: RootState) => state.auth)
+  const { patientLoading, appointmentValue } = useSelector((state: RootState) => state.patient)
 
   useEffect(() => {
     if (doctorId) {
@@ -41,11 +46,18 @@ const DoctorProfilePage = () => {
     }
   }
 
-  const handleAppointmentClick = (doctorId: string) => {
+  const handleAppointmentClick = async (doctorId: string) => {
     if (!user) {
       router.push('/login')
     } else {
-      router.push(`/appointment/${doctorId}`)
+      if (user.role !== 'patient') {
+        router.push('/')
+      }
+      try {
+        await dispatch(appointment({doctorId})).unwrap()
+      } catch (error:any) {
+        toast.error(error.message)
+      }
     }
   }
 
@@ -55,7 +67,11 @@ const DoctorProfilePage = () => {
     </div>
   )
 
-  if (!doctor) return <div className="p-10 text-center font-bold text-red-500">Doctor data not found!</div>
+  if (!doctor) return <DoctorNotFound />
+
+  if (appointmentValue) {
+    return <AppointmentValuePage appointmentValue={appointmentValue} />
+  }
 
   return (
     <div className="min-h-screen bg-[#f8fafc] w-full">
@@ -86,15 +102,26 @@ const DoctorProfilePage = () => {
           )}
         </div>
         {/* Booking Button */}
-          {(!user || user.role === 'patient') && (
-            <button
-              onClick={() => handleAppointmentClick(doctor._id)}
-              className="flex items-center justify-center gap-2 bg-blue-600 text-white font-semibold py-3 px-2 cursor-pointer rounded-xl hover:bg-blue-700 active:scale-95 transition-all shadow-lg shadow-blue-100"
-            >
-              Book Appointment
-              <ArrowRight size={18} />
-            </button>
-          )}
+        {(!user || user.role === 'patient') && (
+          <button
+            onClick={() => handleAppointmentClick(doctor._id)}
+            disabled={patientLoading}
+            className={`flex items-center justify-center gap-2 bg-blue-600 text-white font-semibold py-3 px-2 rounded-xl transition-all shadow-lg shadow-blue-100 
+            ${patientLoading ? 'opacity-70 cursor-not-allowed' : 'hover:bg-blue-700 active:scale-95 cursor-pointer'}`}
+          >
+            {patientLoading ? (
+              <>
+                <Loader2 className="animate-spin" size={18} />
+                Booking...
+              </>
+            ) : (
+              <>
+                Book Appointment
+                <ArrowRight size={18} />
+              </>
+            )}
+          </button>
+        )}
       </div>
 
       <div className="w-full px-4 py-8 md:px-10 lg:px-16">
