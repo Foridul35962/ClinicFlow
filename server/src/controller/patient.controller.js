@@ -186,7 +186,7 @@ export const appointmentHistory = AsyncHandler(async (req, res) => {
         appointmentHistory = await Appointments
             .find({ patientId })
             .populate({
-                path:"doctorId",
+                path: "doctorId",
                 select: "userId",
                 populate: {
                     path: "userId",
@@ -208,8 +208,8 @@ export const appointmentHistory = AsyncHandler(async (req, res) => {
         )
 })
 
-export const getAppointment = AsyncHandler(async(req, res)=>{
-    const {appointmentId} = req.params
+export const getAppointment = AsyncHandler(async (req, res) => {
+    const { appointmentId } = req.params
     const patientId = req.user._id
 
     if (!appointmentId) {
@@ -245,6 +245,6 @@ export const getAppointment = AsyncHandler(async(req, res)=>{
     return res
         .status(200)
         .json(
-            new ApiResponse(200, {appointment, qrImage}, "appointment get done")
+            new ApiResponse(200, { appointment, qrImage }, "appointment get done")
         )
 })

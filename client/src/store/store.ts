@@ -3,13 +3,15 @@ import authReducer from './slice/authSlice'
 import adminReducer from './slice/adminSlice'
 import userReducer from './slice/userSlice'
 import patientReducer from './slice/patientSlice'
+import receptionistReducer from './slice/receptionistSlice'
 
 const store = configureStore({
     reducer:{
         auth: authReducer,
         admin: adminReducer,
         user: userReducer,
-        patient: patientReducer
+        patient: patientReducer,
+        receptionist: receptionistReducer
     }
 })
 

@@ -104,6 +104,19 @@ const Navbar = () => {
                 </Link>
               </>
             )}
+
+            {/* receptionist */}
+            {user && user.role === 'receptionist' && (
+              <>
+                <Link
+                  href={'receptionist/scan'}
+                  className="text-sm font-bold text-slate-600 hover:text-blue-600 transition-colors relative group"
+                >
+                  CheckIn
+                  <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-blue-600 transition-all duration-300 group-hover:w-full"></span>
+                </Link>
+              </>
+            )}
           </div>
 
           {/* Right: Auth & Profile Section */}
@@ -128,7 +141,7 @@ const Navbar = () => {
                       alt="profile"
                       className="w-9 h-9 rounded-full object-cover border border-blue-100 shadow-sm"
                     />
-                    <ChevronDown size={14} className={`text-slate-500 mr-1 transition-transform duration-300 ${isOpenMenu ? 'rotate-180' : ''}`} />
+                    <ChevronDown size={14} className={`text-slate-500 cursor-pointer mr-1 transition-transform duration-300 ${isOpenMenu ? 'rotate-180' : ''}`} />
                   </button>
 
                   {/* Desktop Full Screen Backdrop (Fix for closing on outside click) */}
@@ -209,6 +222,15 @@ const Navbar = () => {
                 </Link>
                 <Link href="/admin/receptionist" onClick={() => setIsOpen(false)} className="text-lg font-bold text-slate-700 flex items-center justify-between border-b border-slate-50 pb-2">
                   Receptionist <ChevronRight size={18} />
+                </Link>
+              </>
+            )}
+
+            {/* receptionist */}
+            {user && user.role === 'receptionist' && (
+              <>
+                <Link href="/receptionist/scan" onClick={() => setIsOpen(false)} className="text-lg font-bold text-slate-700 flex items-center justify-between border-b border-slate-50 pb-2">
+                  CheckIn <ChevronRight size={18} />
                 </Link>
               </>
             )}
