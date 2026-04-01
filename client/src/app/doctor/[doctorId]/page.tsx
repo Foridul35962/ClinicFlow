@@ -54,8 +54,8 @@ const DoctorProfilePage = () => {
         router.push('/')
       }
       try {
-        await dispatch(appointment({doctorId})).unwrap()
-      } catch (error:any) {
+        await dispatch(appointment({ doctorId })).unwrap()
+      } catch (error: any) {
         toast.error(error.message)
       }
     }
@@ -155,14 +155,6 @@ const DoctorProfilePage = () => {
                 <span className="text-slate-400 text-sm ml-2 font-medium">(4.8/5.0)</span>
               </div>
 
-              {user?.role === 'patient' && (
-                <Link
-                  href={`/appointments/book/${doctor._id}`}
-                  className="w-full mt-8 bg-blue-600 text-white py-4 rounded-2xl font-bold text-lg hover:bg-blue-700 shadow-xl shadow-blue-200 transition-all active:scale-95"
-                >
-                  Book Appointment Now
-                </Link>
-              )}
             </div>
 
             <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100">

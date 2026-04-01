@@ -4,7 +4,6 @@ import React from 'react';
 import { 
   Calendar, 
   Clock, 
-  User, 
   Stethoscope, 
   CheckCircle2, 
   QrCode, 
@@ -13,29 +12,12 @@ import {
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
-interface AppointmentProps {
-  appointmentValue: {
-    appointment: {
-      _id: string;
-      status: string;
-      qrHash: string;
-      checkedIn: boolean;
-      date: string;
-    };
-    assignedDate: string;
-    slot: {
-      slotStart: string;
-      slotEnd: string;
-    };
-    qrImage: string;
-  };
-}
 
-const AppointmentValuePage = ({ appointmentValue }: AppointmentProps) => {
+const AppointmentValuePage = ({ appointmentValue }: any) => {
   const router = useRouter();
-  const { appointment, slot, qrImage } = appointmentValue;
+  const { appointment, qrImage } = appointmentValue;
 
-  // Format date to a readable string: e.g., "Thursday, April 2, 2026"
+  // Format date: e.g., "Thursday, April 2, 2026"
   const formattedDate = new Date(appointment.date).toLocaleDateString('en-US', {
     weekday: 'long',
     year: 'numeric',
@@ -54,7 +36,7 @@ const AppointmentValuePage = ({ appointmentValue }: AppointmentProps) => {
           <ArrowLeft size={24} />
         </button>
         <h1 className="font-bold text-lg">Appointment Details</h1>
-        <div className="w-10" /> {/* Spacer */}
+        <div className="w-10" /> 
       </div>
 
       <div className="max-w-2xl mx-auto px-6">
@@ -84,7 +66,8 @@ const AppointmentValuePage = ({ appointmentValue }: AppointmentProps) => {
                 <Clock size={16} /> TIME SLOT
               </label>
               <p className="text-lg font-semibold text-slate-800">
-                {slot.slotStart} AM — {slot.slotEnd} AM
+                {/* Updated to use direct appointment properties */}
+                {appointment.slotStart} — {appointment.slotEnd}
               </p>
             </section>
 
@@ -92,7 +75,12 @@ const AppointmentValuePage = ({ appointmentValue }: AppointmentProps) => {
               <label className="text-slate-400 text-xs font-medium mb-2 block uppercase">Appointment ID</label>
               <div className="flex items-center justify-between bg-slate-50 px-4 py-2 rounded-lg border border-slate-100">
                 <code className="text-xs text-slate-600">{appointment._id}</code>
-                <Copy size={14} className="text-slate-400 cursor-pointer hover:text-blue-600" />
+                <button 
+                  onClick={() => navigator.clipboard.writeText(appointment._id)}
+                  className="p-1 hover:bg-white rounded transition-colors"
+                >
+                  <Copy size={14} className="text-slate-400 hover:text-blue-600" />
+                </button>
               </div>
             </section>
           </div>
