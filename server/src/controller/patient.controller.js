@@ -162,13 +162,89 @@ export const addAppointment = AsyncHandler(async (req, res) => {
 
     const qrImage = await QRCode.toDataURL(qrPayload);
 
+    await redis.del(`appointmentHistory:${patientId}`)
+
     return res
         .status(201)
         .json(
             new ApiResponse(201, {
                 appointment,
-                assignedDate: selectedDate,
-                slot: foundSlot,
                 qrImage
             }, "Appointment auto-assigned"));
 });
+
+export const appointmentHistory = AsyncHandler(async (req, res) => {
+    const patientId = req.user._id
+
+    let appointmentHistory
+    const redisKey = `appointmentHistory:${patientId}`
+    const redisAppointmentHistory = await redis.get(redisKey)
+
+    if (redisAppointmentHistory) {
+        appointmentHistory = JSON.parse(redisAppointmentHistory)
+    } else {
+        appointmentHistory = await Appointments
+            .find({ patientId })
+            .populate({
+                path:"doctorId",
+                select: "userId",
+                populate: {
+                    path: "userId",
+                    select: "-image.publicId -password"
+                }
+            })
+            .sort({ createdAt: -1 })
+
+        await redis.set(redisKey,
+            JSON.stringify(appointmentHistory),
+            "EX", 600
+        )
+    }
+
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(200, appointmentHistory, "appointment history fetch successful")
+        )
+})
+
+export const getAppointment = AsyncHandler(async(req, res)=>{
+    const {appointmentId} = req.params
+    const patientId = req.user._id
+
+    if (!appointmentId) {
+        throw new ApiErrors(200, "appointmentId is required")
+    }
+
+    const redisKey = `appointment:${appointmentId}`
+    let appointment
+
+    const redisAppointment = await redis.get(redisKey)
+    if (redisAppointment) {
+        appointment = JSON.parse(redisAppointment)
+    } else {
+        appointment = await Appointments.findById(appointmentId)
+        if (!appointment) {
+            throw new ApiErrors(404, "appointment is not found")
+        }
+
+        if (appointment.patientId.toString() !== patientId.toString()) {
+            throw new ApiErrors(401, "unauthorized access")
+        }
+
+        await redis.set(redisKey,
+            JSON.stringify(appointment),
+            "EX", 300
+        )
+    }
+
+    const qrPayload = `${process.env.CORS_ORIGIN}/receptionist/check-in?appointmentId=${appointment._id}&hash=${appointment.qrHash}`;
+
+    const qrImage = await QRCode.toDataURL(qrPayload);
+
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(200, {appointment, qrImage}, "appointment get done")
+        )
+})
