@@ -95,8 +95,6 @@ export const doctorDashboard = AsyncHandler(async (req, res) => {
         status: "Pending"
     }).sort({ tokenNumber: 1 });
 
-    console.log(queueData)
-
     // First pending = current serving
     const currentToken = queueData.length > 0 ? queueData[0].tokenNumber : 0;
 
