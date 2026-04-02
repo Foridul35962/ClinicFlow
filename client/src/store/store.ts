@@ -4,6 +4,7 @@ import adminReducer from './slice/adminSlice'
 import userReducer from './slice/userSlice'
 import patientReducer from './slice/patientSlice'
 import receptionistReducer from './slice/receptionistSlice'
+import doctorReducer from './slice/doctorSlice'
 
 const store = configureStore({
     reducer:{
@@ -11,7 +12,8 @@ const store = configureStore({
         admin: adminReducer,
         user: userReducer,
         patient: patientReducer,
-        receptionist: receptionistReducer
+        receptionist: receptionistReducer,
+        doctor: doctorReducer
     }
 })
 
