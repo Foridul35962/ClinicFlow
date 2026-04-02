@@ -27,7 +27,7 @@ const appointmentSchema = new mongoose.Schema({
         type: String,
         required: true,
         enum: ['Booked', 'Cancelled', 'Pending', 'Done'],
-        default: 'Pending'
+        default: 'Booked'
     },
     qrHash: {
         type: String,

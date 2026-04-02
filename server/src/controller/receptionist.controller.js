@@ -46,6 +46,8 @@ export const checkInPatient = AsyncHandler(async (req, res) => {
         .limit(1);
     appointment.tokenNumber = lastToken.length ? lastToken[0].tokenNumber + 1 : 1;
     appointment.checkedIn = true;
+
+    appointment.status = "Pending"
     await appointment.save();
 
     return res
