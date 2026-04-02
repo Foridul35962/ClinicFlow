@@ -8,10 +8,9 @@ import {
   CheckCircle2, 
   QrCode, 
   ArrowLeft,
-  Copy
+  Copy,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-
 
 const AppointmentValuePage = ({ appointmentValue }: any) => {
   const router = useRouter();
@@ -40,15 +39,25 @@ const AppointmentValuePage = ({ appointmentValue }: any) => {
       </div>
 
       <div className="max-w-2xl mx-auto px-6">
-        {/* Status Card */}
-        <div className="bg-blue-50 border border-blue-100 rounded-3xl p-6 mb-8 flex items-center gap-4">
-          <div className="bg-blue-600 p-3 rounded-2xl text-white">
-            <CheckCircle2 size={28} />
+        {/* Status & Token Card */}
+        <div className="bg-blue-50 border border-blue-100 rounded-3xl p-6 mb-8 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <div className="bg-blue-600 p-3 rounded-2xl text-white">
+              <CheckCircle2 size={28} />
+            </div>
+            <div>
+              <p className="text-blue-600 font-semibold text-sm uppercase tracking-wider">Status</p>
+              <h2 className="text-2xl font-bold text-blue-900">{appointment.status}</h2>
+            </div>
           </div>
-          <div>
-            <p className="text-blue-600 font-semibold text-sm uppercase tracking-wider">Status</p>
-            <h2 className="text-2xl font-bold text-blue-900">{appointment.status}</h2>
-          </div>
+
+          {/* Token Number Display - Only shows if exists */}
+          {appointment.tokenNumber && (
+            <div className="bg-white px-5 py-2 rounded-2xl border border-blue-200 shadow-sm text-center">
+              <p className="text-[10px] font-bold text-blue-400 uppercase tracking-widest">Token</p>
+              <p className="text-2xl font-black text-blue-600">#{appointment.tokenNumber}</p>
+            </div>
+          )}
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -66,7 +75,6 @@ const AppointmentValuePage = ({ appointmentValue }: any) => {
                 <Clock size={16} /> TIME SLOT
               </label>
               <p className="text-lg font-semibold text-slate-800">
-                {/* Updated to use direct appointment properties */}
                 {appointment.slotStart} — {appointment.slotEnd}
               </p>
             </section>
@@ -116,7 +124,8 @@ const AppointmentValuePage = ({ appointmentValue }: any) => {
             <h4 className="font-semibold mb-1">Check-in Instructions</h4>
             <p className="text-sm text-slate-400 leading-relaxed">
               Please arrive at the clinic 10 minutes before your scheduled time. 
-              Show the QR code to the front desk to confirm your arrival.
+              Show the QR code to the front desk to confirm your arrival. 
+              {appointment.tokenNumber && ` Your token number is #${appointment.tokenNumber}.`}
             </p>
           </div>
         </div>
