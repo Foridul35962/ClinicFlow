@@ -115,6 +115,13 @@ const Navbar = () => {
                   CheckIn
                   <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-blue-600 transition-all duration-300 group-hover:w-full"></span>
                 </Link>
+                <Link
+                  href={'receptionist/recall'}
+                  className="text-sm font-bold text-slate-600 hover:text-blue-600 transition-colors relative group"
+                >
+                  Recall
+                  <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-blue-600 transition-all duration-300 group-hover:w-full"></span>
+                </Link>
               </>
             )}
           </div>
@@ -231,6 +238,9 @@ const Navbar = () => {
               <>
                 <Link href="/receptionist/scan" onClick={() => setIsOpen(false)} className="text-lg font-bold text-slate-700 flex items-center justify-between border-b border-slate-50 pb-2">
                   CheckIn <ChevronRight size={18} />
+                </Link>
+                <Link href="/receptionist/recall" onClick={() => setIsOpen(false)} className="text-lg font-bold text-slate-700 flex items-center justify-between border-b border-slate-50 pb-2">
+                  Recall <ChevronRight size={18} />
                 </Link>
               </>
             )}

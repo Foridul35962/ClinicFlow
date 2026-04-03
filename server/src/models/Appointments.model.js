@@ -34,6 +34,10 @@ const appointmentSchema = new mongoose.Schema({
         unique: true
     },
     tokenNumber: Number,
+    isSkipped: {
+        type: Boolean,
+        default: false
+    },
     checkedIn: {
         type: Boolean,
         default: false

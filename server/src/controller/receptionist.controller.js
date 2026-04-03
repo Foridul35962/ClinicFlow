@@ -58,3 +58,27 @@ export const checkInPatient = AsyncHandler(async (req, res) => {
             new ApiResponse(200, {}, "Patient CheckIn Successfully")
         )
 })
+
+export const recallPatient = AsyncHandler(async (req, res) => {
+    const { appointmentId } = req.body;
+
+    const appointment = await Appointments.findById(appointmentId);
+    if (!appointment) {
+        throw new ApiErrors(404, "Appointment not found");
+    }
+
+    if (!appointment.isSkipped) {
+        throw new ApiErrors(400, "Patient is not skipped");
+    }
+
+    appointment.isSkipped = false;
+    await appointment.save();
+
+    await redis.del(`dashboard:${appointment.doctorId}`);
+
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(200, null, "Patient recalled")
+        );
+});

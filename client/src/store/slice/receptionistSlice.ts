@@ -1,3 +1,4 @@
+import { completeAppointmentType } from "@/types/doctor";
 import { checkInPatientType } from "@/types/receptionist";
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import axios, { AxiosError } from "axios";
@@ -10,6 +11,21 @@ export const checkInPatient = createAsyncThunk(
         try {
             const res = await axios.post(`${SERVER_URL}/checkIn`, data,
                 { withCredentials: true }
+            )
+            return res.data
+        } catch (error) {
+            const err = error as AxiosError<any>
+            return rejectWithValue(err?.response?.data || "Something went wrong")
+        }
+    }
+)
+
+export const reCall = createAsyncThunk(
+    "receptionist/recall",
+    async(data:completeAppointmentType, {rejectWithValue})=>{
+        try {
+            const res = await axios.post(`${SERVER_URL}/recall`, data,
+                {withCredentials: true}
             )
             return res.data
         } catch (error) {

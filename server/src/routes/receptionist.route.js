@@ -6,5 +6,6 @@ import checkReceptionist from '../middlewares/checkReceptionist.js'
 const receptionistRouter = express.Router()
 
 receptionistRouter.post('/checkIn', protect, checkReceptionist, receptionistController.checkInPatient)
+receptionistRouter.post('/recall', protect, checkReceptionist, receptionistController.recallPatient)
 
 export default receptionistRouter
