@@ -1,3 +1,4 @@
+import { completeAppointmentType } from "@/types/doctor";
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import axios, { AxiosError } from "axios";
 
@@ -9,6 +10,36 @@ export const doctorDashboard = createAsyncThunk(
         try {
             const res = await axios.get(`${SERVER_URL}/dashboard`,
                 { withCredentials: true }
+            )
+            return res.data
+        } catch (error) {
+            const err = error as AxiosError<any>
+            return rejectWithValue(err?.response?.data || "Something went wrong")
+        }
+    }
+)
+
+export const callNextPatient = createAsyncThunk(
+    "doctor/callNext",
+    async(_:null, {rejectWithValue})=>{
+        try {
+            const res = await axios.get(`${SERVER_URL}/call-next-patient`,{
+                withCredentials: true
+            })
+            return res.data
+        } catch (error) {
+            const err = error as AxiosError<any>
+            return rejectWithValue(err?.response?.data || "Something went wrong")
+        }
+    }
+)
+
+export const completeAppointment = createAsyncThunk(
+    "doctor/completeAppointment",
+    async(data:completeAppointmentType, {rejectWithValue})=>{
+        try {
+            const res = await axios.patch(`${SERVER_URL}/completeAppointment`, data,
+                {withCredentials:true}
             )
             return res.data
         } catch (error) {
