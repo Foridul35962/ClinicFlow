@@ -1,6 +1,6 @@
 "use client"
 
-import { doctorDashboard } from '@/store/slice/doctorSlice'
+import { callNextPatient, completeAppointment, doctorDashboard } from '@/store/slice/doctorSlice'
 import { AppDispatch, RootState } from '@/store/store'
 import React, { useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
@@ -9,7 +9,7 @@ import { Users, CheckCircle, XCircle, Clock, DollarSign, PlayCircle, User, Phone
 
 const DoctorDashboard = () => {
     const dispatch = useDispatch<AppDispatch>()
-    const { dashboardData, dashboardLoading } = useSelector((state: RootState) => state.doctor)
+    const { dashboardData, dashboardLoading, doctorNextCallLoading, appointmentDoneLoading } = useSelector((state: RootState) => state.doctor)
 
     useEffect(() => {
         const fetch = async () => {
@@ -23,10 +23,22 @@ const DoctorDashboard = () => {
     }, [dispatch])
 
     // Appointment complete korar function
-    const handleCompleteAppointment = (appointmentId: string) => {
-        toast.success(`Completing appointment: ${appointmentId}`)
-        // Ekhane tomar API call ba dispatch logic likhbe
-        // dispatch(completeAppointment(appointmentId))
+    const handleCompleteAppointment = async (appointmentId: string) => {
+        try {
+            await dispatch(completeAppointment({appointmentId})).unwrap()
+            toast.success(`Complete appointment`)
+        } catch (error:any) {
+            toast.error(error.message)
+        }
+    }
+
+    const handleCallNextPatient = async () => {
+        try {
+            await dispatch(callNextPatient(null)).unwrap()
+            toast.success("Next Patient Called")
+        } catch (error: any) {
+            toast.error(error.message)
+        }
     }
 
     if (dashboardLoading) return <div className="text-white p-10">Loading Dashboard...</div>
@@ -60,10 +72,10 @@ const DoctorDashboard = () => {
 
             {/* Stats Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                <StatCard title="Total" value={stats.totalAppointments} icon={<Users size={24}/>} color="blue" />
-                <StatCard title="Waiting" value={stats.waiting} icon={<Clock size={24}/>} color="yellow" />
-                <StatCard title="Completed" value={stats.completed} icon={<CheckCircle size={24}/>} color="emerald" />
-                <StatCard title="Earnings" value={`$${stats.income}`} icon={<DollarSign size={24}/>} color="purple" />
+                <StatCard title="Total" value={stats.totalAppointments} icon={<Users size={24} />} color="blue" />
+                <StatCard title="Waiting" value={stats.waiting} icon={<Clock size={24} />} color="yellow" />
+                <StatCard title="Completed" value={stats.completed} icon={<CheckCircle size={24} />} color="emerald" />
+                <StatCard title="Earnings" value={`$${stats.income}`} icon={<DollarSign size={24} />} color="purple" />
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -74,21 +86,33 @@ const DoctorDashboard = () => {
                         <h2 className="text-xl font-semibold mb-6 flex items-center gap-2">
                             <PlayCircle className="text-blue-400" /> Queue Control
                         </h2>
-                        
+
                         <div className="flex flex-col md:flex-row items-center justify-around bg-white/5 rounded-xl p-8 border border-white/5">
                             <div className="text-center mb-6 md:mb-0">
                                 <span className="text-sm uppercase tracking-widest text-slate-400">Current Token</span>
                                 <div className="text-6xl font-black text-blue-500 mt-2">{queue.currentToken}</div>
                             </div>
-                            
+
                             <div className="h-20 w-px bg-white/10 hidden md:block"></div>
 
                             <div className="text-center">
-                                <button 
-                                    onClick={() => toast.info("Calling next patient...")}
-                                    className="px-8 py-4 bg-blue-600 hover:bg-blue-500 transition-all rounded-full font-bold shadow-lg shadow-blue-500/20 flex items-center gap-3 active:scale-95"
+                                <button
+                                    onClick={handleCallNextPatient}
+                                    disabled={doctorNextCallLoading}
+                                    className={`px-8 py-4 bg-blue-600 hover:bg-blue-500 transition-all rounded-full font-bold shadow-lg shadow-blue-500/20 flex items-center gap-3 active:scale-95 ${doctorNextCallLoading ? "opacity-70 cursor-not-allowed" : ""
+                                        }`}
                                 >
-                                    Call Next Patient
+                                    {doctorNextCallLoading ? (
+                                        <>
+                                            <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                            </svg>
+                                            Calling...
+                                        </>
+                                    ) : (
+                                        "Call Next Patient"
+                                    )}
                                 </button>
                                 <p className="mt-3 text-sm text-slate-500">Last token issued: {queue.lastToken}</p>
                             </div>
@@ -127,13 +151,29 @@ const DoctorDashboard = () => {
                                             <p className="font-medium text-blue-400">{currentAppt.slotStart} - {currentAppt.slotEnd}</p>
                                         </div>
                                     </div>
-                                    
+
                                     {/* Done Button */}
-                                    <button 
+                                    <button
                                         onClick={() => handleCompleteAppointment(currentAppt._id)}
-                                        className="w-full md:w-auto px-6 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-semibold transition-colors flex items-center justify-center gap-2"
+                                        disabled={appointmentDoneLoading}
+                                        className={`w-full md:w-auto px-6 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-semibold transition-all flex items-center justify-center gap-2 ${appointmentDoneLoading ? "opacity-70 cursor-not-allowed" : "active:scale-95"
+                                            }`}
                                     >
-                                        <CheckCircle size={18} /> Mark as Completed
+                                        {appointmentDoneLoading ? (
+                                            <>
+                                                {/* Minimal Spinner */}
+                                                <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                                </svg>
+                                                Processing...
+                                            </>
+                                        ) : (
+                                            <>
+                                                <CheckCircle size={18} />
+                                                Mark as Completed
+                                            </>
+                                        )}
                                     </button>
                                 </div>
                             </div>

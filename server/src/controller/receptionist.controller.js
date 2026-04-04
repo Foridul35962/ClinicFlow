@@ -51,6 +51,7 @@ export const checkInPatient = AsyncHandler(async (req, res) => {
     await appointment.save();
 
     await redis.del(`appointment:${appointmentId}`)
+    await redis.del(`dashboard:${appointment.doctorId}`);
 
     return res
         .status(200)

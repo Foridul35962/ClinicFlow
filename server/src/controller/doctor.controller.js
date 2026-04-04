@@ -117,6 +117,7 @@ export const doctorDashboard = AsyncHandler(async (req, res) => {
         queue: {
             currentToken,
             lastToken,
+            consultationFee: doctor.consultationFee,
             currentAppointment,
             nextPatients
         }
@@ -152,15 +153,10 @@ export const callNextPatient = AsyncHandler(async (req, res) => {
 
 export const completeAppointment = AsyncHandler(async (req, res) => {
     const { appointmentId } = req.body;
-    const doctorId = req.user._id
 
     const appointment = await Appointments.findById(appointmentId);
     if (!appointment) {
         throw new ApiErrors(404, "Appointment not found");
-    }
-
-    if (doctorId.toString() !== appointment.doctorId.toString()) {
-        throw new ApiErrors(401, 'unauthorized access')
     }
 
     if (appointment.status !== "Pending") {
@@ -200,10 +196,19 @@ const moveToNextPatient = async (doctorId) => {
         })
         .sort({ tokenNumber: 1 });
 
-    if (queue.length <= 1) {
+    if (queue.length == 1) {
         return {
             skippedToken: queue[0]?.tokenNumber || null,
-            nextToken: null
+            nextToken: null,
+            currentAppointment: queue[0]
+        };
+    }
+
+    if (queue.length < 1) {
+        return {
+            skippedToken: null,
+            nextToken: null,
+            currentAppointment: null
         };
     }
 
