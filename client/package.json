@@ -18,7 +18,8 @@
     "react-dom": "19.2.3",
     "react-hook-form": "^7.71.2",
     "react-redux": "^9.2.0",
-    "react-toastify": "^11.0.5"
+    "react-toastify": "^11.0.5",
+    "socket.io-client": "^4.8.3"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
