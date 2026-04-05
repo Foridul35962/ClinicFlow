@@ -1,14 +1,15 @@
 "use client"
 
 import AppointmentValuePage from '@/components/patient/AppointmentValuePage'
-import { getAppointment } from '@/store/slice/patientSlice'
+import { getAppointment, updateStatus } from '@/store/slice/patientSlice'
 import { AppDispatch, RootState } from '@/store/store'
 import { useParams } from 'next/navigation'
 import React, { useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { toast } from 'react-toastify'
-import { Loader2 } from 'lucide-react' // Lucide loader icon
+import { Loader2 } from 'lucide-react'
 import AppointmentNotFound from '@/components/not-found/AppointmentNotFound'
+import socket from '@/socket'
 
 const Page = () => {
     const { appointmentId } = useParams()
@@ -26,6 +27,22 @@ const Page = () => {
         }
         fetch()
     }, [appointmentId, dispatch])
+
+    type AppointmentStatusPayload = {
+        status: string
+    }
+
+    useEffect(() => {
+        const handleUpdateStatus = ({ status }: AppointmentStatusPayload) => {
+            dispatch(updateStatus(status))
+        }
+
+        socket.on('appointmentStatusUpdate', handleUpdateStatus)
+
+        return () => {
+            socket.off('appointmentStatusUpdate', handleUpdateStatus)
+        }
+    }, [dispatch, appointmentId])
 
     // Loading State UI
     if (patientLoading) {

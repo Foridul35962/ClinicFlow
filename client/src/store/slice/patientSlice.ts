@@ -21,10 +21,10 @@ export const appointment = createAsyncThunk(
 
 export const getAppointmentHistory = createAsyncThunk(
     "patient/appointmentHistory",
-    async(_:null, {rejectWithValue})=>{
+    async (_: null, { rejectWithValue }) => {
         try {
             const res = await axios.get(`${SERVER_URL}/appointmentHistory`,
-                {withCredentials: true}
+                { withCredentials: true }
             )
             return res.data
         } catch (error) {
@@ -36,10 +36,10 @@ export const getAppointmentHistory = createAsyncThunk(
 
 export const getAppointment = createAsyncThunk(
     "patient/getAppointment",
-    async({appointmentId}:{appointmentId: string}, {rejectWithValue})=>{
+    async ({ appointmentId }: { appointmentId: string }, { rejectWithValue }) => {
         try {
             const res = await axios.get(`${SERVER_URL}/get-appointment/${appointmentId}`,
-                {withCredentials: true}
+                { withCredentials: true }
             )
             return res.data
         } catch (error) {
@@ -49,14 +49,14 @@ export const getAppointment = createAsyncThunk(
     }
 )
 
-interface initialStateType{
+interface initialStateType {
     patientLoading: boolean
     appointmentValue: AppointmentProps | null
     appointmentHistory: any
     appointment: any
 }
 
-const initialState:initialStateType = {
+const initialState: initialStateType = {
     patientLoading: false,
     appointmentValue: null,
     appointment: null,
@@ -66,46 +66,53 @@ const initialState:initialStateType = {
 const patientSlice = createSlice({
     name: 'patient',
     initialState,
-    reducers: {},
-    extraReducers: (builder)=>{
+    reducers: {
+        updateStatus: (state, action) => {
+            if (state.appointment?.appointment) {
+                state.appointment.appointment.status = action.payload
+            }
+        }
+    },
+    extraReducers: (builder) => {
         // add apointment
         builder
-            .addCase(appointment.pending, (state)=>{
+            .addCase(appointment.pending, (state) => {
                 state.patientLoading = true
             })
-            .addCase(appointment.fulfilled, (state, action)=>{
+            .addCase(appointment.fulfilled, (state, action) => {
                 state.patientLoading = false
                 state.appointmentValue = action.payload.data
                 state.appointmentHistory = [action.payload.data, ...state.appointmentHistory]
             })
-            .addCase(appointment.rejected, (state)=>{
+            .addCase(appointment.rejected, (state) => {
                 state.patientLoading = false
             })
         //appointment history
         builder
-            .addCase(getAppointmentHistory.pending, (state)=>{
+            .addCase(getAppointmentHistory.pending, (state) => {
                 state.patientLoading = true
             })
-            .addCase(getAppointmentHistory.fulfilled, (state, action)=>{
+            .addCase(getAppointmentHistory.fulfilled, (state, action) => {
                 state.patientLoading = false
                 state.appointmentHistory = action.payload.data
             })
-            .addCase(getAppointmentHistory.rejected, (state)=>{
+            .addCase(getAppointmentHistory.rejected, (state) => {
                 state.patientLoading = false
             })
         // get appointment
         builder
-            .addCase(getAppointment.pending, (state)=>{
+            .addCase(getAppointment.pending, (state) => {
                 state.patientLoading = true
             })
-            .addCase(getAppointment.fulfilled, (state, action)=>{
+            .addCase(getAppointment.fulfilled, (state, action) => {
                 state.patientLoading = false
                 state.appointment = action.payload.data
             })
-            .addCase(getAppointment.rejected, (state)=>{
+            .addCase(getAppointment.rejected, (state) => {
                 state.patientLoading = false
             })
     }
 })
 
 export default patientSlice.reducer
+export const { updateStatus } = patientSlice.actions

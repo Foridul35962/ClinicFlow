@@ -10,22 +10,9 @@ export const checkInPatient = AsyncHandler(async (req, res) => {
         throw new ApiErrors(400, 'all field are required')
     }
 
-    const redisKey = `appointment:${appointmentId}`
-    let appointment
-
-    const redisAppointment = await redis.get(redisKey)
-    if (redisAppointment) {
-        appointment = JSON.parse(redisAppointment)
-    } else {
-        appointment = await Appointments.findById(appointmentId)
-        if (!appointment) {
-            throw new ApiErrors(404, "appointment is not found")
-        }
-
-        await redis.set(redisKey,
-            JSON.stringify(appointment),
-            "EX", 300
-        )
+    const appointment = await Appointments.findById(appointmentId)
+    if (!appointment) {
+        throw new ApiErrors(404, "appointment is not found")
     }
 
     if (appointment.qrHash.toString() !== hash) {
@@ -52,6 +39,11 @@ export const checkInPatient = AsyncHandler(async (req, res) => {
 
     await redis.del(`appointment:${appointmentId}`)
     await redis.del(`dashboard:${appointment.doctorId}`);
+
+    const io = req.app.get('io')
+
+    io.to(`user:${appointment.patientId}`)
+        .emit('appointmentStatusUpdate', { status: 'Pending' })
 
     return res
         .status(200)

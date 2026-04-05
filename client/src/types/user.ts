@@ -26,6 +26,7 @@ export type resendOtpType = {
 }
 
 export type userType = {
+    _id: string
     fullName: string
     email: string
     phoneNumber: string
