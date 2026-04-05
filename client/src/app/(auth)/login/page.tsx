@@ -23,7 +23,6 @@ const LoginPage = () => {
             router.push('/')
             toast.success('Login Successfully')
         } catch (error: any) {
-            console.log(error)
             toast.error(error.message)
         }
     }

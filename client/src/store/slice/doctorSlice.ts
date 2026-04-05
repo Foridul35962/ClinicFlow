@@ -115,7 +115,6 @@ const doctorSlice = createSlice({
             .addCase(completeAppointment.fulfilled, (state, action) => {
                 state.appointmentDoneLoading = false
                 const data = action.payload.data
-                console.log(data)
 
                 const queue = state.dashboardData.queue;
                 const stats = state.dashboardData.stats;

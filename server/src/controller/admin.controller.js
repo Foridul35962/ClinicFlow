@@ -799,7 +799,7 @@ export const deleteDoctor = AsyncHandler(async (req, res) => {
             try {
                 await cloudinary.uploader.destroy(user.image.publicId)
             } catch (err) {
-                console.log('image delete failed:', err)
+                throw new ApiErrors(500, "image delete failed")
             }
         }
 
