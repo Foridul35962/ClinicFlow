@@ -4,6 +4,7 @@ import ApiResponse from "../helpers/ApiResponse.js";
 import AsyncHandler from "../helpers/AsyncHandler.js";
 import Appointments from "../models/Appointments.model.js";
 import Doctors from "../models/Doctors.model.js";
+import { setCurrentToken } from "../utils/setCurrentToken.js";
 
 export const doctorDashboard = AsyncHandler(async (req, res) => {
     const userId = req.user._id;
@@ -100,6 +101,7 @@ export const doctorDashboard = AsyncHandler(async (req, res) => {
 
     const currentAppointment = queueData.length > 0 ? queueData[0] : null;
     const currentToken = currentAppointment ? currentAppointment.tokenNumber : 0;
+    setCurrentToken(doctor._id, currentToken)
 
     const lastToken = queueData.length > 0
         ? queueData[queueData.length - 1].tokenNumber
@@ -142,7 +144,7 @@ export const callNextPatient = AsyncHandler(async (req, res) => {
         throw new ApiErrors(404, "Doctor not found");
     }
 
-    const result = await moveToNextPatient(doctor._id);
+    const result = await moveToNextPatient(req, doctor._id);
 
     await redis.del(`dashboard:${doctor._id}`);
 
@@ -167,7 +169,7 @@ export const completeAppointment = AsyncHandler(async (req, res) => {
     await appointment.save();
 
     // move next
-    const result = await moveToNextPatient(appointment.doctorId);
+    const result = await moveToNextPatient(req, appointment.doctorId);
 
     await redis.del(`dashboard:${appointment.doctorId}`);
 
@@ -176,7 +178,7 @@ export const completeAppointment = AsyncHandler(async (req, res) => {
     );
 });
 
-const moveToNextPatient = async (doctorId) => {
+const moveToNextPatient = async (req, doctorId) => {
 
     const todayStart = new Date();
     todayStart.setHours(0, 0, 0, 0);
@@ -196,15 +198,15 @@ const moveToNextPatient = async (doctorId) => {
         })
         .sort({ tokenNumber: 1 });
 
-    if (queue.length == 1) {
-        return {
-            skippedToken: queue[0]?.tokenNumber || null,
-            nextToken: null,
-            currentAppointment: queue[0]
-        };
-    }
+    const date = new Date().toISOString().split('T')[0];
+    const io = req.app.get('io');
 
     if (queue.length < 1) {
+        await setCurrentToken(doctorId, date, 0);
+
+        io.to(`queue:${doctorId}:${date}`)
+            .emit("updateToken", { currentToken: 0 });
+
         return {
             skippedToken: null,
             nextToken: null,
@@ -212,10 +214,28 @@ const moveToNextPatient = async (doctorId) => {
         };
     }
 
+    if (queue.length === 1) {
+        await setCurrentToken(doctorId, date, queue[0].tokenNumber);
+
+        io.to(`queue:${doctorId}:${date}`)
+            .emit("updateToken", { currentToken: queue[0].tokenNumber });
+
+        return {
+            skippedToken: queue[0]?.tokenNumber || null,
+            nextToken: null,
+            currentAppointment: queue[0]
+        };
+    }
+
     const current = queue[0];
 
     current.isSkipped = true;
     await current.save();
+
+    await setCurrentToken(doctorId, date, queue[1].tokenNumber);
+
+    io.to(`queue:${doctorId}:${date}`)
+        .emit("updateToken", { currentToken: queue[1].tokenNumber });
 
     return {
         skippedToken: current.tokenNumber,

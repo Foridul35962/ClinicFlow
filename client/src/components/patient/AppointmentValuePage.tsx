@@ -9,14 +9,14 @@ import {
   QrCode, 
   ArrowLeft,
   Copy,
+  Users,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
-const AppointmentValuePage = ({ appointmentValue }: any) => {
+const AppointmentValuePage = ({ appointmentValue, currentToken }: any) => {
   const router = useRouter();
   const { appointment, qrImage } = appointmentValue;
 
-  // Format date: e.g., "Thursday, April 2, 2026"
   const formattedDate = new Date(appointment.date).toLocaleDateString('en-US', {
     weekday: 'long',
     year: 'numeric',
@@ -39,6 +39,30 @@ const AppointmentValuePage = ({ appointmentValue }: any) => {
       </div>
 
       <div className="max-w-2xl mx-auto px-6">
+        
+        {/* Live Queue / Current Token Card - NOTUN ADD KORA HOYECHE */}
+        <div className="mb-6 overflow-hidden rounded-3xl border border-emerald-100 bg-emerald-50/50">
+            <div className="flex items-center justify-between px-6 py-4">
+                <div className="flex items-center gap-3">
+                    <div className="relative">
+                        <div className="absolute inset-0 bg-emerald-500 animate-ping rounded-full opacity-20"></div>
+                        <div className="relative bg-emerald-500 p-2 rounded-full text-white">
+                            <Users size={18} />
+                        </div>
+                    </div>
+                    <div>
+                        <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest">Live Status</p>
+                        <h3 className="text-sm font-semibold text-emerald-900">Current Ongoing Token</h3>
+                    </div>
+                </div>
+                <div className="text-right">
+                    <span className="text-3xl font-black text-emerald-600">
+                        {currentToken ? `#${currentToken}` : '---'}
+                    </span>
+                </div>
+            </div>
+        </div>
+
         {/* Status & Token Card */}
         <div className="bg-blue-50 border border-blue-100 rounded-3xl p-6 mb-8 flex items-center justify-between gap-4">
           <div className="flex items-center gap-4">
@@ -47,14 +71,14 @@ const AppointmentValuePage = ({ appointmentValue }: any) => {
             </div>
             <div>
               <p className="text-blue-600 font-semibold text-sm uppercase tracking-wider">Status</p>
-              <h2 className="text-2xl font-bold text-blue-900">{appointment.status}</h2>
+              <h2 className="text-2xl font-bold text-blue-900 capitalize">{appointment.status}</h2>
             </div>
           </div>
 
-          {/* Token Number Display - Only shows if exists */}
+          {/* Patient's Token Number */}
           {appointment.tokenNumber && (
             <div className="bg-white px-5 py-2 rounded-2xl border border-blue-200 shadow-sm text-center">
-              <p className="text-[10px] font-bold text-blue-400 uppercase tracking-widest">Token</p>
+              <p className="text-[10px] font-bold text-blue-400 uppercase tracking-widest">Your Token</p>
               <p className="text-2xl font-black text-blue-600">#{appointment.tokenNumber}</p>
             </div>
           )}

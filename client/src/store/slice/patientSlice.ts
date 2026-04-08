@@ -49,18 +49,35 @@ export const getAppointment = createAsyncThunk(
     }
 )
 
+export const getCurrentToken = createAsyncThunk(
+    "patient/currentToken",
+    async ({ doctorId, date }: { doctorId: string, date: Date }, { rejectWithValue }) => {
+        try {
+            const res = await axios.get(`${SERVER_URL}/currentToken/${doctorId}/${date}`,
+                { withCredentials: true }
+            )
+            return res.data
+        } catch (error) {
+            const err = error as AxiosError<any>
+            return rejectWithValue(err?.response?.data || "Something went wrong")
+        }
+    }
+)
+
 interface initialStateType {
     patientLoading: boolean
     appointmentValue: AppointmentProps | null
     appointmentHistory: any
     appointment: any
+    currentToken: number | null
 }
 
 const initialState: initialStateType = {
     patientLoading: false,
     appointmentValue: null,
     appointment: null,
-    appointmentHistory: []
+    appointmentHistory: [],
+    currentToken: null
 }
 
 const patientSlice = createSlice({
@@ -71,6 +88,9 @@ const patientSlice = createSlice({
             if (state.appointment?.appointment) {
                 state.appointment.appointment.status = action.payload
             }
+        },
+        updateToken: (state, action) => {
+            state.currentToken = action.payload
         }
     },
     extraReducers: (builder) => {
@@ -111,8 +131,13 @@ const patientSlice = createSlice({
             .addCase(getAppointment.rejected, (state) => {
                 state.patientLoading = false
             })
+        //get current token
+        builder
+            .addCase(getCurrentToken.fulfilled, (state, action) => {
+                state.currentToken = action.payload.data
+            })
     }
 })
 
 export default patientSlice.reducer
-export const { updateStatus } = patientSlice.actions
+export const { updateStatus, updateToken } = patientSlice.actions

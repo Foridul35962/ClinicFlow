@@ -1,7 +1,7 @@
 "use client"
 
 import AppointmentValuePage from '@/components/patient/AppointmentValuePage'
-import { getAppointment, updateStatus } from '@/store/slice/patientSlice'
+import { getAppointment, getCurrentToken, updateStatus, updateToken } from '@/store/slice/patientSlice'
 import { AppDispatch, RootState } from '@/store/store'
 import { useParams } from 'next/navigation'
 import React, { useEffect } from 'react'
@@ -14,37 +14,61 @@ import socket from '@/socket'
 const Page = () => {
     const { appointmentId } = useParams()
     const dispatch = useDispatch<AppDispatch>()
-    const { patientLoading, appointment } = useSelector((state: RootState) => state.patient)
+    const { patientLoading, appointment, currentToken } = useSelector((state: RootState) => state.patient)
 
     useEffect(() => {
-        const fetch = async () => {
+        const fetchData = async () => {
             if (!appointmentId) return;
             try {
-                await dispatch(getAppointment({ appointmentId: appointmentId as string })).unwrap()
+                const res = await dispatch(getAppointment({ appointmentId: appointmentId as string })).unwrap()
+
+                if (res?.data?.appointment?.doctorId) {
+                    dispatch(getCurrentToken({ doctorId: res.data.appointment.doctorId, date: res.data.appointment.date }))
+                }
             } catch (error: any) {
                 toast.error(error.message || "Failed to fetch appointment")
             }
         }
-        fetch()
+        fetchData()
     }, [appointmentId, dispatch])
 
-    type AppointmentStatusPayload = {
-        status: string
-    }
-
     useEffect(() => {
-        const handleUpdateStatus = ({ status }: AppointmentStatusPayload) => {
+        const handleUpdateStatus = ({ status }: { status: string }) => {
             dispatch(updateStatus(status))
         }
-
         socket.on('appointmentStatusUpdate', handleUpdateStatus)
+        return () => { socket.off('appointmentStatusUpdate', handleUpdateStatus) }
+    }, [dispatch])
+
+    useEffect(() => {
+        if (!appointment?.appointment) return;
+
+        const { doctorId, date } = appointment.appointment;
+
+        const formattedDate = new Date(date)
+            .toISOString()
+            .split('T')[0];
+
+        socket.emit('joinQueue', { doctorId, date: formattedDate })
 
         return () => {
-            socket.off('appointmentStatusUpdate', handleUpdateStatus)
+            socket.emit('leaveQueue', { doctorId, date: formattedDate })
         }
-    }, [dispatch, appointmentId])
+    }, [appointment?.appointment?.doctorId, appointment?.appointment?.date])
 
-    // Loading State UI
+    useEffect(() => {
+        const handleCurrentToken = ({ currentToken }: { currentToken: number }) => {
+            dispatch(updateToken(currentToken))
+        }
+
+        socket.on("updateToken", handleCurrentToken)
+
+        return () => {
+            socket.off("updateToken", handleCurrentToken)
+        }
+    }, [dispatch])
+
+    // Loading State
     if (patientLoading) {
         return (
             <div className="flex flex-col items-center justify-center min-h-screen bg-white">
@@ -54,14 +78,13 @@ const Page = () => {
         )
     }
 
-    // Appointment Not Found State
     if (!appointment && !patientLoading) {
         return <AppointmentNotFound />
     }
 
     return (
         <>
-            {appointment && <AppointmentValuePage appointmentValue={appointment} />}
+            {appointment && <AppointmentValuePage appointmentValue={appointment} currentToken={currentToken} />}
         </>
     )
 }

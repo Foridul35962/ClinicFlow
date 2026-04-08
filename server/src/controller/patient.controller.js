@@ -248,3 +248,16 @@ export const getAppointment = AsyncHandler(async (req, res) => {
             new ApiResponse(200, { appointment, qrImage }, "appointment get done")
         )
 })
+
+export const getCurrentToken = AsyncHandler(async (req, res) => {
+    const { doctorId, date } = req.params;
+
+    const formattedDate = new Date(date).toISOString().split('T')[0];
+
+    const redisKey = `queue:${doctorId}:${formattedDate}`;
+    const currentToken = await redis.get(redisKey);
+
+    return res.status(200).json(
+        new ApiResponse(200, Number(currentToken) || 0, "current token fetch done")
+    );
+});
