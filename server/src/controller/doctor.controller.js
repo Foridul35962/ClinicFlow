@@ -172,6 +172,12 @@ export const completeAppointment = AsyncHandler(async (req, res) => {
     const result = await moveToNextPatient(req, appointment.doctorId);
 
     await redis.del(`dashboard:${appointment.doctorId}`);
+    await redis.del(`appointment:${appointmentId}`)
+
+    const io = req.app.get('io')
+
+    io.to(`user:${appointment.patientId}`)
+        .emit('appointmentStatusUpdate', { status: 'Done' })
 
     return res.status(200).json(
         new ApiResponse(200, result, "Appointment completed & next called")
