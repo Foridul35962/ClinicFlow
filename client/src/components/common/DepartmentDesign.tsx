@@ -1,29 +1,30 @@
-import React from 'react';
+"use client"
+
+import React, { useEffect } from 'react';
 import { ArrowRight, Plus, Activity, ShieldPlus, Zap } from 'lucide-react';
 import Link from 'next/link';
 import DepartmentCard from './DepartmentCard';
 import AddDepartmentModal from './AddDepartmentModal';
+import { useDispatch, useSelector } from 'react-redux';
+import { AppDispatch, RootState } from '@/store/store';
+import { getDepartments } from '@/store/slice/adminSlice';
+import { toast } from 'react-toastify';
 
-const DepartmentsDesign = async ({ admin }: { admin: boolean }) => {
-    const SERVER_URL = `${process.env.NEXT_PUBLIC_DOCKER_SERVER_URL}/api/user/allDepartment`;
-    interface Department {
-    _id: string;
-    name: string;
-    description?: string;
-}
-    let departments:Department[] = [];
-
-    try {
-        const res = await fetch(SERVER_URL, {
-            next: { tags: ['departments'], revalidate: false }
-        });
-        if (res.ok) {
-            const jsonRes = await res.json();
-            departments = jsonRes.data || [];
+const DepartmentsDesign = ({ admin }: { admin: boolean }) => {
+    const dispatch = useDispatch<AppDispatch>()
+    const { departments } = useSelector((state: RootState) => state.admin)
+    useEffect(() => {
+        const fetchDepartment = async () => {
+            try {
+                await dispatch(getDepartments(null)).unwrap()
+            } catch (error: any) {
+                toast.error(error.message)
+            }
         }
-    } catch (error) {
-        console.error("Fetch Error:", error);
-    }
+        if (departments.length === 0) {
+            fetchDepartment()
+        }
+    }, [])
 
     return (
         <div className="min-h-screen bg-[#FDFDFD]">
@@ -43,11 +44,11 @@ const DepartmentsDesign = async ({ admin }: { admin: boolean }) => {
                             <p className="text-xs text-slate-400 font-bold italic">Excellence Guaranteed</p>
                         </div>
                     </div>
-                    
+
                     {/* Admin Button moved to the far right corner */}
                     {admin && (
                         <div className="group">
-                             <AddDepartmentModal />
+                            <AddDepartmentModal />
                         </div>
                     )}
                 </div>
@@ -57,7 +58,7 @@ const DepartmentsDesign = async ({ admin }: { admin: boolean }) => {
             <section className="relative pt-6 pb-20 overflow-hidden">
                 <div className="container mx-auto px-6 relative z-10">
                     <div className="max-w-3xl">
-                       
+
                         <h1 className="text-6xl md:text-8xl font-black text-slate-900 mb-8 leading-[0.9] tracking-tighter">
                             Advanced <br />
                             <span className="text-transparent bg-clip-text bg-linear-to-r from-blue-600 to-indigo-600">
@@ -93,7 +94,7 @@ const DepartmentsDesign = async ({ admin }: { admin: boolean }) => {
                 <div className="container mx-auto px-6">
                     <div className="bg-slate-900 rounded-[3.5rem] p-12 md:p-16 relative overflow-hidden group">
                         <div className="absolute top-0 right-0 w-64 h-64 bg-blue-600/10 rounded-full blur-3xl group-hover:bg-blue-600/20 transition-all duration-700" />
-                        
+
                         <div className="flex flex-col md:flex-row items-center justify-between gap-10 relative z-10">
                             <div className="max-w-xl text-center md:text-left">
                                 <h3 className="text-3xl md:text-4xl font-black text-white mb-4 leading-tight">

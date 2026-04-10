@@ -72,7 +72,7 @@ const Navbar = () => {
             {user && user.role === 'admin' && (
               <>
                 <Link
-                  href={'admin/departments'}
+                  href={'/admin/departments'}
                   className="text-sm font-bold text-slate-600 hover:text-blue-600 transition-colors relative group"
                 >
                   Departments
@@ -80,7 +80,7 @@ const Navbar = () => {
                 </Link>
 
                 <Link
-                  href={'admin/doctors'}
+                  href={'/admin/doctors'}
                   className="text-sm font-bold text-slate-600 hover:text-blue-600 transition-colors relative group"
                 >
                   Doctors
@@ -88,7 +88,7 @@ const Navbar = () => {
                 </Link>
 
                 <Link
-                  href={'admin/add-doctor'}
+                  href={'/admin/add-doctor'}
                   className="text-sm font-bold text-slate-600 hover:text-blue-600 transition-colors relative group"
                 >
                   Add Doctor
@@ -96,7 +96,7 @@ const Navbar = () => {
                 </Link>
 
                 <Link
-                  href={'admin/receptionist'}
+                  href={'/admin/receptionist'}
                   className="text-sm font-bold text-slate-600 hover:text-blue-600 transition-colors relative group"
                 >
                   Receptionist
@@ -109,14 +109,14 @@ const Navbar = () => {
             {user && user.role === 'receptionist' && (
               <>
                 <Link
-                  href={'receptionist/scan'}
+                  href={'/receptionist/scan'}
                   className="text-sm font-bold text-slate-600 hover:text-blue-600 transition-colors relative group"
                 >
                   CheckIn
                   <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-blue-600 transition-all duration-300 group-hover:w-full"></span>
                 </Link>
                 <Link
-                  href={'receptionist/recall'}
+                  href={'/receptionist/recall'}
                   className="text-sm font-bold text-slate-600 hover:text-blue-600 transition-colors relative group"
                 >
                   Recall
