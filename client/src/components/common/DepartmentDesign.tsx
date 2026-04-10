@@ -5,20 +5,27 @@ import DepartmentCard from './DepartmentCard';
 import AddDepartmentModal from './AddDepartmentModal';
 
 const DepartmentsDesign = async ({ admin }: { admin: boolean }) => {
-    const SERVER_URL = `${process.env.NEXT_PUBLIC_DOCKER_SERVER_URL}/api/user/allDepartment`;
-    let departments = [];
+    // const SERVER_URL = `${process.env.NEXT_PUBLIC_DOCKER_SERVER_URL}/api/user/allDepartment`;
+    interface Department {
+    _id: string;
+    name: string;
+    // Add other fields your API returns, for example:
+    // description?: string;
+    // icon?: string;
+}
+    let departments:Department[] = [];
 
-    try {
-        const res = await fetch(SERVER_URL, {
-            next: { tags: ['departments'], revalidate: false }
-        });
-        if (res.ok) {
-            const jsonRes = await res.json();
-            departments = jsonRes.data || [];
-        }
-    } catch (error) {
-        console.error("Fetch Error:", error);
-    }
+    // try {
+    //     const res = await fetch(SERVER_URL, {
+    //         next: { tags: ['departments'], revalidate: false }
+    //     });
+    //     if (res.ok) {
+    //         const jsonRes = await res.json();
+    //         departments = jsonRes.data || [];
+    //     }
+    // } catch (error) {
+    //     console.error("Fetch Error:", error);
+    // }
 
     return (
         <div className="min-h-screen bg-[#FDFDFD]">
