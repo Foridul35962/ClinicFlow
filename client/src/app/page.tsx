@@ -1,5 +1,4 @@
 import CTA from '@/components/home/CTA'
-import Depertment from '@/components/home/Depertment'
 import Features from '@/components/home/Features'
 import HeroSection from '@/components/home/HeroSection'
 import ProblemSection from '@/components/home/ProblemSection'
@@ -15,7 +14,6 @@ const page = () => {
       <SolutionSection />
       <Work />
       <Features />
-      <Depertment />
       <CTA />
     </>
   )
